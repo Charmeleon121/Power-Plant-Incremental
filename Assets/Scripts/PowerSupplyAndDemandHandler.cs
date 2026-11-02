@@ -53,17 +53,32 @@ public class PowerSupplyAndDemandHandler : MonoBehaviour {
 		suppliers = GameObject.FindGameObjectsWithTag("Generator");
 
 		powerSupply = 0;
-		PowerSupplier powerSupplierScript;
+		PowerSupplier psScript;
 		foreach (GameObject supplier in suppliers) {
-			powerSupplierScript = supplier.GetComponent<PowerSupplier>();
+			psScript = supplier.GetComponent<PowerSupplier>();
 
-			if (powerSupplierScript.isGeneratorRunning) {
-				powerSupply += powerSupplierScript.currentlyProducing;
-				powerDemand = Mathf.Max(0f, powerDemand - powerSupplierScript.currentlyProducing);
-				player.money += powerSupplierScript.currentlyProducing * player.moneyMult;
+			if (psScript.isGeneratorRunning) {
+				powerSupply += psScript.currentlyProducing;
+				powerDemand = Mathf.Max(0f, powerDemand - psScript.currentlyProducing);
+				player.money += psScript.currentlyProducing * player.moneyMult;
 			}
 		}
 
 		uiHandler.powerStatsText.text = $"Current demand: {powerDemand:n2} W\nSatisfaction: {powerSupply:n2} W";
+	}
+
+	/*
+	 * Set the power generation multiplier for every generator of a given type
+	 */
+	public void SetPowerGenMultiplier(string type, float value) {
+		suppliers = GameObject.FindGameObjectsWithTag("Generator");
+
+		PowerSupplier psScript;
+		foreach (GameObject supplier in suppliers) {
+			if (supplier.name.Contains(type)) {
+				psScript = supplier.GetComponent<PowerSupplier>();
+				psScript.powerMultiplier = value;
+			}
+		}
 	}
 }

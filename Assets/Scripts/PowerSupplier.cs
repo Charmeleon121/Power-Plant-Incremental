@@ -41,21 +41,23 @@ public class PowerSupplier : MonoBehaviour {
 	 * Update the fuel level and current activity state of the generator
 	 */
 	void Update() {
-		if (currentFuelLevel == 0) {
-			Deactivate();
-		}
-
 		int delta = DateTime.UtcNow.Subtract(fuelLastUpdated).Seconds;
 		if (delta >= fuelLastUpdatedMaxDelta) {
 			if (isGeneratorRunning) {
-				currentFuelLevel = Mathf.Max(0f, currentFuelLevel - 1);
+				currentFuelLevel = Mathf.Max(0f, currentFuelLevel - 0.1f);
 			}
 
 			fuelLastUpdated = DateTime.UtcNow;
 		}
+
+		if (currentFuelLevel == 0) {
+			Deactivate();
+		}
 	}
 
-	// Activate the generator
+	/*
+	 * Activate the generator
+	 */
 	public void Activate() {
 		if (currentFuelLevel > 0) {
 			isGeneratorRunning = true;
@@ -69,7 +71,9 @@ public class PowerSupplier : MonoBehaviour {
 		}
 	}
 
-	// Deactivate the generator
+	/*
+	 * Deactivate the generator
+	 */
 	public void Deactivate() {
 		isGeneratorRunning = false;
 		currentlyProducing = 0;

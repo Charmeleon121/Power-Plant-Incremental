@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -95,12 +94,21 @@ public class Player : MonoBehaviour {
 			if (hit.collider.CompareTag("Generator")) {
 				target = hit.collider.gameObject;
 				psScript = target.GetComponent<PowerSupplier>();
-				uiHandler.SetHoverText($"{hit.collider.name} (Active: {psScript.isGeneratorRunning})\nFuel: {psScript.currentFuelLevel}/{psScript.maxFuelLevel} | Producing: {psScript.currentlyProducing} W");
+
+				string activeState;
+				if (psScript.isGeneratorRunning) {
+					activeState = "Active";
+				} else {
+					activeState = "Inactive";
+				}
+
+				uiHandler.ToggleHoverPanel(true);
+				uiHandler.SetHoverText(hit.collider.name, activeState, psScript.currentFuelLevel, psScript.maxFuelLevel, psScript.currentlyProducing, psScript.powerMultiplier);
 			} else {
-				uiHandler.SetHoverText("");
+				uiHandler.ToggleHoverPanel(false);
 			}
 		} else {
-			uiHandler.SetHoverText("");
+			uiHandler.ToggleHoverPanel(false);
 		}
 
 		if (useAction.IsPressed() && target != null) {
@@ -133,5 +141,12 @@ public class Player : MonoBehaviour {
 		} else {
 			rb.linearVelocity = Vector3.zero;
 		}
+	}
+
+	/*
+	 * Set the money multiplier value
+	 */
+	public void SetMoneyMultiplier(float value) {
+		moneyMult = value;
 	}
 }
