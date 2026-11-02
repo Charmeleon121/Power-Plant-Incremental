@@ -24,6 +24,7 @@ public class PowerSupplyAndDemandHandler : MonoBehaviour {
 		// Initial power demand of 100 W
 		powerDemand = 100;
 		
+		UpdatePowerDisplay();
 		uiLastUpdated = DateTime.UtcNow;
 	}
 
