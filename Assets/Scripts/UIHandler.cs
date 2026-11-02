@@ -84,7 +84,7 @@ public class UIHandler : MonoBehaviour {
 	 * Toggle visibility of the unlock panel
 	 */
 	public void ToggleUnlockPanel() {
-		int delta = DateTime.UtcNow.Subtract(unlockPanelLastToggled).Milliseconds;
+		double delta = DateTime.UtcNow.Subtract(unlockPanelLastToggled).TotalMilliseconds;
 
 		if (delta >= 150) {
 			unlockPanelLastToggled = DateTime.UtcNow;

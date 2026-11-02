@@ -41,7 +41,7 @@ public class PowerSupplier : MonoBehaviour {
 	 * Update the fuel level and current activity state of the generator
 	 */
 	void Update() {
-		int delta = DateTime.UtcNow.Subtract(fuelLastUpdated).Seconds;
+		double delta = DateTime.UtcNow.Subtract(fuelLastUpdated).TotalSeconds;
 		if (delta >= fuelLastUpdatedMaxDelta) {
 			if (isGeneratorRunning) {
 				currentFuelLevel = Mathf.Max(0f, currentFuelLevel - 0.1f);

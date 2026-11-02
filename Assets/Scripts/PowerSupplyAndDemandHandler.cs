@@ -32,7 +32,7 @@ public class PowerSupplyAndDemandHandler : MonoBehaviour {
 	 * Update method
 	 */
 	void Update() {
-		int delta = DateTime.UtcNow.Subtract(uiLastUpdated).Seconds;
+		double delta = DateTime.UtcNow.Subtract(uiLastUpdated).TotalSeconds;
 
 		if (delta >= 1) {
 			UpdatePowerDisplay();

@@ -54,7 +54,7 @@ public class Player : MonoBehaviour {
 			Interaction();
 		}
 		
-		if (unlockMenuAction.IsPressed()) {
+		if (unlockMenuAction.triggered) {
 			uiHandler.ToggleUnlockPanel();
 		}
 	}
@@ -114,9 +114,9 @@ public class Player : MonoBehaviour {
 		if (useAction.IsPressed() && target != null) {
 			if (target.CompareTag("Generator")) {
 				// Prevent the click from registering multiple times in one go by enforcing a time delay between clicks
-				int delta = DateTime.UtcNow.Subtract(psScript.lastClicked).Milliseconds;
+				double delta = DateTime.UtcNow.Subtract(psScript.lastClicked).TotalMilliseconds;
 				
-				if (delta >= 200) {
+				if (delta >= 150) {
 					if (psScript.isGeneratorRunning) {
 						psScript.Deactivate();
 					} else {
