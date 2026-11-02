@@ -6,7 +6,7 @@ public class UIHandler : MonoBehaviour {
 	private Player player;
 	
 	// UI text elements
-	public TextMeshProUGUI powerStatsText, hoverText, moneyText;
+	public TextMeshProUGUI powerStatsText, hoverText, moneyText, fpsText;
 
 	/*
 	 * Start method
@@ -21,6 +21,8 @@ public class UIHandler : MonoBehaviour {
 	void Update() {
 		string moneyString = player.money.ToString("N2");
 		moneyText.text = $"${moneyString}";
+		
+		fpsText.text = $"FPS: {1f / Time.deltaTime:n2}";
 	}
 
 	// Update the hover text
