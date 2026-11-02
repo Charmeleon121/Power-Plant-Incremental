@@ -1677,7 +1677,8 @@ MonoBehaviour:
   fpsText: {fileID: 1774704207}
   hoverPanel: {fileID: 688137095}
   unlockPanel: {fileID: 671398723}
-  unlockButton00: {fileID: 522198853}
+  unlockButtons:
+  - {fileID: 522198853}
 --- !u!1 &1436889933
 GameObject:
   m_ObjectHideFlags: 0
@@ -2974,9 +2975,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Manual generator production:
-
-    1W -> 2W'
+  m_text: "Manual generator production modifier:\n1.00x \u2192 1.10x "
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

@@ -11,8 +11,17 @@ public class UIHandler : MonoBehaviour {
 	// UI elements
 	public TextMeshProUGUI powerStatsText, objNameText, objInfoText, moneyText, fpsText;
 	public GameObject hoverPanel, unlockPanel;
-	public Button unlockButton00;
-	
+	public Button[] unlockButtons = new Button[1];
+
+	// Upgrade costs, and whether the upgrades have been purchased
+	private readonly float[] upgradeCosts = { 5.00f };
+	private bool[] upgradesPurchased = { false };
+
+	// Color values
+	private readonly Color lockedButtonColor = new(255f, 170f / 255f, 170f / 255f);
+	private readonly Color unlockedButtonColor = new(170f / 255f, 255f, 170f / 255f);
+	private readonly Color purchasedButtonColor = new(100f / 255f, 100f / 255f, 100f / 255f);
+
 	// Timer values
 	private DateTime unlockPanelLastToggled;
 
@@ -28,6 +37,10 @@ public class UIHandler : MonoBehaviour {
 
 		ToggleHoverPanel(false);
 
+		foreach (Button btn in unlockButtons) {
+			btn.image.color = lockedButtonColor;
+			btn.interactable = false;
+		}
 		AssignFunctionsToButtons();
 
 		// Lock the cursor to the window and hide it
@@ -42,14 +55,26 @@ public class UIHandler : MonoBehaviour {
 		moneyText.text = $"${moneyString}";
 		
 		fpsText.text = $"FPS: {1f / Time.deltaTime:n2}";
+
+		for (int i = 0; i < upgradeCosts.Length; ++i) {
+			if (player.money >= upgradeCosts[i] && !upgradesPurchased[i]) {
+				unlockButtons[i].image.color = unlockedButtonColor;
+				unlockButtons[i].interactable = true;
+			}
+		}
 	}
 
 	/*
 	 * Assign functions to all buttons on the UI
 	 */
 	private void AssignFunctionsToButtons() {
-		unlockButton00.onClick.AddListener(() => {
+		unlockButtons[0].onClick.AddListener(() => {
 			psadHandler.SetPowerGenMultiplier("Manual", 1.1f);
+			player.money -= upgradeCosts[0];
+
+			unlockButtons[0].image.color = purchasedButtonColor;
+			upgradesPurchased[0] = true;
+			unlockButtons[0].interactable = false;
 		});
 	}
 
