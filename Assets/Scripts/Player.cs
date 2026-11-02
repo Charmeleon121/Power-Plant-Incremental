@@ -16,7 +16,9 @@ public class Player : MonoBehaviour {
 	private readonly float walkSpeed = 5f;
 	private readonly float lookSpeed = 10f;
 
-	// Player inventory
+	// Player inventory and monehy
+	public float money = 0f;
+	public float moneyMult = 0.1f;
 	private List<string> inventory = new List<string>();
 
 	/*
