@@ -11,11 +11,11 @@ public class UIHandler : MonoBehaviour {
 	// UI elements
 	public TextMeshProUGUI powerStatsText, objNameText, objInfoText, moneyText, fpsText;
 	public GameObject hoverPanel, unlockPanel;
-	public Button[] unlockButtons = new Button[1];
+	public Button[] unlockButtons = new Button[2];
 
 	// Upgrade costs, and whether the upgrades have been purchased
-	private readonly float[] upgradeCosts = { 5.00f };
-	private bool[] upgradesPurchased = { false };
+	private readonly float[] upgradeCosts = { 3.00f, 5.00f };
+	private bool[] upgradesPurchased = { false, false };
 
 	// Color values
 	private readonly Color lockedButtonColor = new(255f, 170f / 255f, 170f / 255f);
@@ -29,18 +29,25 @@ public class UIHandler : MonoBehaviour {
 	 * Start method
 	 */
 	void Start() {
+		// Initialize the external script variables
 		player = GameObject.Find("Player").GetComponent<Player>();
 		psadHandler = GetComponent<PowerSupplyAndDemandHandler>();
 		
+		// Ensure the unlock window begins invisible
 		unlockPanel.SetActive(false);
 		unlockPanelLastToggled = DateTime.UtcNow;
 
+		// Ensure the hover panel begins invisible
 		ToggleHoverPanel(false);
 
-		foreach (Button btn in unlockButtons) {
-			btn.image.color = lockedButtonColor;
-			btn.interactable = false;
+		// Set the color, interactable status, and cost of each button in the unlock window
+		for (int i = 0; i < unlockButtons.Length; ++i) {
+			unlockButtons[i].image.color = lockedButtonColor;
+			unlockButtons[i].interactable = false;
+			unlockButtons[i].transform.GetChild(1).GetComponent<TextMeshProUGUI>().text = $"Cost: ${upgradeCosts[i]:n2}";
 		}
+
+		// Assign functionality to the buttons on the UI
 		AssignFunctionsToButtons();
 
 		// Lock the cursor to the window and hide it
@@ -75,6 +82,15 @@ public class UIHandler : MonoBehaviour {
 			unlockButtons[0].image.color = purchasedButtonColor;
 			upgradesPurchased[0] = true;
 			unlockButtons[0].interactable = false;
+		});
+
+		unlockButtons[1].onClick.AddListener(() => {
+			psadHandler.SetMaxFuelDelta("Manual", 1100);
+			player.money -= upgradeCosts[1];
+
+			unlockButtons[1].image.color = purchasedButtonColor;
+			upgradesPurchased[1] = true;
+			unlockButtons[1].interactable = false;
 		});
 	}
 

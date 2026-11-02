@@ -16,7 +16,7 @@ public class PowerSupplier : MonoBehaviour {
 
 	// Timer values
 	private DateTime fuelLastUpdated;
-	private int fuelLastUpdatedMaxDelta;
+	public int fuelLastUpdatedMaxDelta;
 	public DateTime lastClicked;
 
 	// Set the values as soon as the object is created
@@ -28,7 +28,7 @@ public class PowerSupplier : MonoBehaviour {
 		if (gameObject.name.Contains("Manual")) {
 			maxFuelLevel = 1;
 			basePower = 1;
-			fuelLastUpdatedMaxDelta = 1;
+			fuelLastUpdatedMaxDelta = 1000;
 		}
 
 		powerMultiplier = 1;
@@ -41,7 +41,7 @@ public class PowerSupplier : MonoBehaviour {
 	 * Update the fuel level and current activity state of the generator
 	 */
 	void Update() {
-		double delta = DateTime.UtcNow.Subtract(fuelLastUpdated).TotalSeconds;
+		double delta = DateTime.UtcNow.Subtract(fuelLastUpdated).TotalMilliseconds;
 		if (delta >= fuelLastUpdatedMaxDelta) {
 			if (isGeneratorRunning) {
 				currentFuelLevel = Mathf.Max(0f, currentFuelLevel - 0.1f);

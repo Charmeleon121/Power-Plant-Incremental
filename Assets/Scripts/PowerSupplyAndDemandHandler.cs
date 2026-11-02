@@ -57,7 +57,7 @@ public class PowerSupplyAndDemandHandler : MonoBehaviour {
 		foreach (GameObject supplier in suppliers) {
 			psScript = supplier.GetComponent<PowerSupplier>();
 
-			if (psScript.isGeneratorRunning) {
+			if (psScript.isGeneratorRunning && psScript.currentFuelLevel > 0) {
 				powerSupply += psScript.currentlyProducing;
 				powerDemand = Mathf.Max(0f, powerDemand - psScript.currentlyProducing);
 				player.money += psScript.currentlyProducing * player.moneyMult;
@@ -78,6 +78,20 @@ public class PowerSupplyAndDemandHandler : MonoBehaviour {
 			if (supplier.name.Contains(type)) {
 				psScript = supplier.GetComponent<PowerSupplier>();
 				psScript.powerMultiplier = value;
+			}
+		}
+	}
+
+	/*
+	 * Modify the max delta time for updating the fuel for every generator of a given
+	 * type - larger values mean longer running between fuel uses
+	 */
+	public void SetMaxFuelDelta(string type, int value) {
+		PowerSupplier psScript;
+		foreach (GameObject supplier in suppliers) {
+			if (supplier.name.Contains(type)) {
+				psScript = supplier.GetComponent<PowerSupplier>();
+				psScript.fuelLastUpdatedMaxDelta = value;
 			}
 		}
 	}
