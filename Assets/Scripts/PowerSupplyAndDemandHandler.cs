@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class PowerSupplyAndDemandHandler : MonoBehaviour {
@@ -11,8 +12,7 @@ public class PowerSupplyAndDemandHandler : MonoBehaviour {
 	private GameObject[] suppliers;
 
 	// UI update timer
-	private int updateTimer;
-	private int maxUpdateTimer = 30;
+	private DateTime uiLastUpdated;
 
 	/*
 	 * Start method
@@ -23,17 +23,19 @@ public class PowerSupplyAndDemandHandler : MonoBehaviour {
 
 		// Initial power demand of 100 W
 		powerDemand = 100;
+		
+		uiLastUpdated = DateTime.UtcNow;
 	}
 
 	/*
 	 * Update method
 	 */
 	void Update() {
-		if (updateTimer == maxUpdateTimer) {
+		int delta = DateTime.UtcNow.Subtract(uiLastUpdated).Seconds;
+
+		if (delta >= 1) {
 			UpdatePowerDisplay();
-			updateTimer = 0;
-		} else {
-			++updateTimer;
+			uiLastUpdated = DateTime.UtcNow;
 		}
 		
 		if (powerDemand == 0) {

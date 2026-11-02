@@ -9,17 +9,17 @@ public class Player : MonoBehaviour {
 
 	// Input actions
 	private InputSystem_Actions keybinds;
-	private InputAction useAction, moveAction, lookAction;
+	private InputAction useAction, moveAction, lookAction, unlockMenuAction;
 
 	// Variables relating to player movement
 	private Rigidbody rb;
 	private readonly float walkSpeed = 5f;
 	private readonly float lookSpeed = 10f;
+	public bool lookAndMoveActive;
 
 	// Player inventory and monehy
 	public float money = 0f;
 	public float moneyMult = 0.1f;
-	private List<string> inventory = new List<string>();
 
 	/*
 	 * Initialize keybinds on Awake
@@ -38,18 +38,26 @@ public class Player : MonoBehaviour {
 		uiHandler = GameObject.Find("EventSystem").GetComponent<UIHandler>();
 
 		useAction = InputSystem.actions.FindAction("Player/Use");
-
-		rb = GetComponent<Rigidbody>();
 		moveAction = InputSystem.actions.FindAction("Player/Move");
 		lookAction = InputSystem.actions.FindAction("Player/Look");
+		unlockMenuAction = InputSystem.actions.FindAction("Player/Unlock Menu");
+		
+		rb = GetComponent<Rigidbody>();
+		lookAndMoveActive = true;
 	}
 
 	/*
 	 * Update method - non-physics-related code should run in here
 	 */
 	private void Update() {
-		Look();
-		Interaction();
+		if (lookAndMoveActive) {
+			Look();
+			Interaction();
+		}
+		
+		if (unlockMenuAction.IsPressed()) {
+			uiHandler.ToggleUnlockPanel();
+		}
 	}
 
 	/*
@@ -57,7 +65,9 @@ public class Player : MonoBehaviour {
 	 * code should be run from here
 	 */
 	private void FixedUpdate() {
-		Move();
+		if (lookAndMoveActive) {
+			Move();
+		}
 	}
 
 	/*
@@ -96,7 +106,9 @@ public class Player : MonoBehaviour {
 		if (useAction.IsPressed() && target != null) {
 			if (target.CompareTag("Generator")) {
 				// Prevent the click from registering multiple times in one go by enforcing a time delay between clicks
-				if (DateTime.UtcNow.Subtract(psScript.lastClicked).Seconds > 0.5f) {
+				int delta = DateTime.UtcNow.Subtract(psScript.lastClicked).Milliseconds;
+				
+				if (delta >= 200) {
 					if (psScript.isGeneratorRunning) {
 						psScript.Deactivate();
 					} else {

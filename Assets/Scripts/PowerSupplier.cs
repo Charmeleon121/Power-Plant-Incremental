@@ -15,8 +15,8 @@ public class PowerSupplier : MonoBehaviour {
 	public float powerMultiplier;
 
 	// Timer values
-	private int fuelUpdateTimer = 0;
-	private int maxFuelUpdateTimer;
+	private DateTime fuelLastUpdated;
+	private int fuelLastUpdatedMaxDelta;
 	public DateTime lastClicked;
 
 	// Set the values as soon as the object is created
@@ -28,11 +28,12 @@ public class PowerSupplier : MonoBehaviour {
 		if (gameObject.name.Contains("Manual")) {
 			maxFuelLevel = 1;
 			basePower = 1;
-			maxFuelUpdateTimer = 240;
+			fuelLastUpdatedMaxDelta = 1;
 		}
 
 		powerMultiplier = 1;
 
+		fuelLastUpdated = DateTime.UtcNow;
 		lastClicked = DateTime.UtcNow;
 	}
 
@@ -42,17 +43,15 @@ public class PowerSupplier : MonoBehaviour {
 	void Update() {
 		if (currentFuelLevel == 0) {
 			Deactivate();
-			fuelUpdateTimer = 0;
 		}
 
-		if (fuelUpdateTimer == maxFuelUpdateTimer) {
+		int delta = DateTime.UtcNow.Subtract(fuelLastUpdated).Seconds;
+		if (delta >= fuelLastUpdatedMaxDelta) {
 			if (isGeneratorRunning) {
 				currentFuelLevel = Mathf.Max(0f, currentFuelLevel - 1);
 			}
 
-			fuelUpdateTimer = 0;
-		} else {
-			++fuelUpdateTimer;
+			fuelLastUpdated = DateTime.UtcNow;
 		}
 	}
 
