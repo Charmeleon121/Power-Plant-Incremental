@@ -161,10 +161,10 @@ public class UIHandler : MonoBehaviour {
 		for (int i = 0; i < unlockPanelContent.childCount; ++i) {
 			Button button = unlockPanelContent.GetChild(i).GetComponent<Button>();
 
-			// i is somehow becoming equal to 2 here -- FIX IMMEDIATELY
+			int index = i;
 			button.onClick.AddListener(() => {
-				player.money -= upgradeCosts[i];
-				upgradesPurchased[i] = true;
+				player.money -= upgradeCosts[index];
+				upgradesPurchased[index] = true;
 				button.image.color = purchasedButtonColor;
 				button.interactable = false;
 			});
