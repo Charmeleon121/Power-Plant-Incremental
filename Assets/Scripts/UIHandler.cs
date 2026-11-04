@@ -1,4 +1,6 @@
+using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,15 +9,18 @@ public class UIHandler : MonoBehaviour {
 	// External scripts
 	private Player player;
 	private PowerSupplyAndDemandHandler psadHandler;
-	
+
+	// UI element prefabs
+	private GameObject unlockButtonPrefab;
+
 	// UI elements
 	public TextMeshProUGUI powerStatsText, objNameText, objInfoText, moneyText, fpsText;
 	public GameObject hoverPanel, unlockPanel;
-	public Button[] unlockButtons = new Button[2];
+	public Transform unlockPanelContent;
 
 	// Upgrade costs, and whether the upgrades have been purchased
-	private readonly float[] upgradeCosts = { 3.00f, 5.00f };
-	private bool[] upgradesPurchased = { false, false };
+	private List<float> upgradeCosts;
+	private List<bool> upgradesPurchased;
 
 	// Color values
 	private readonly Color lockedButtonColor = new(255f, 170f / 255f, 170f / 255f);
@@ -32,6 +37,8 @@ public class UIHandler : MonoBehaviour {
 		// Initialize the external script variables
 		player = GameObject.Find("Player").GetComponent<Player>();
 		psadHandler = GetComponent<PowerSupplyAndDemandHandler>();
+
+		unlockButtonPrefab = Resources.Load<GameObject>("UI Prefabs/Unlock Tree Button");
 		
 		// Ensure the unlock window begins invisible
 		unlockPanel.SetActive(false);
@@ -40,15 +47,16 @@ public class UIHandler : MonoBehaviour {
 		// Ensure the hover panel begins invisible
 		ToggleHoverPanel(false);
 
-		// Set the color, interactable status, and cost of each button in the unlock window
-		for (int i = 0; i < unlockButtons.Length; ++i) {
-			unlockButtons[i].image.color = lockedButtonColor;
-			unlockButtons[i].interactable = false;
-			unlockButtons[i].transform.GetChild(1).GetComponent<TextMeshProUGUI>().text = $"Cost: ${upgradeCosts[i]:n2}";
-		}
+		upgradeCosts = new();
+		upgradesPurchased = new();
 
-		// Assign functionality to the buttons on the UI
-		AssignFunctionsToButtons();
+		// Create the buttons for the unlock window
+		CreateUnlockPanelButton("Manual", 0, "Improved Gear Ratios", 3.00f, "powerGen", 1.0f, 1.1f);
+		GameObject[] parentButton = { unlockPanelContent.GetChild(0).gameObject };
+		CreateUnlockPanelButton("Manual", 1, "Handcrank Lubricant", 5.00f, "fuelDelta", 1000, 1100, parentButton);
+
+		// Assign the generic functionality to the unlock window buttons
+		AssignGenericFunctionsToButtons();
 
 		// Lock the cursor to the window and hide it
 		ToggleCursorLockState(true);
@@ -63,35 +71,104 @@ public class UIHandler : MonoBehaviour {
 		
 		fpsText.text = $"FPS: {1f / Time.deltaTime:n2}";
 
-		for (int i = 0; i < upgradeCosts.Length; ++i) {
+		for (int i = 0; i < unlockPanelContent.childCount; ++i) {
+			Button button = unlockPanelContent.GetChild(i).GetComponent<Button>();
+
 			if (player.money >= upgradeCosts[i] && !upgradesPurchased[i]) {
-				unlockButtons[i].image.color = unlockedButtonColor;
-				unlockButtons[i].interactable = true;
+				button.image.color = unlockedButtonColor;
+				button.interactable = true;
 			}
 		}
 	}
 
 	/*
+	 * Create a button for the unlock window
+	 * 
+	 * Parameters:
+	 * targetType:     Indicates what the button will affect ("Manual" for manual generator, "Player" for the player, etc.)
+	 * tier:           Indicates what tier the upgrade is - higher tier means further to the right in the window, more expensive
+	 *			           and providing better upgrades
+	 * title:          The title displayed at the top of the button
+	 * cost:           The cost of purchasing this upgrade (values will be truncated to 2d.p.)
+	 * modifierTarget: Indicates what specific aspect of the target is being upgraded ("powerGen", "fuelDelta", etc.)
+	 * initValue:      What the value of the target is before being upgraded
+	 * newValue:       What the button will upgrade that value to
+	 * parents:        The button or buttons directly before this one in the upgrade tree structure - leave blank for starting upgrades
+	 */
+	private void CreateUnlockPanelButton(string targetType, int tier, string title, float cost, string modifierTarget, float initValue, float newValue, GameObject[] parents = null) {
+		List<Transform> existingButtons = new();
+		for (int i = 0; i < unlockPanelContent.childCount; ++i) {
+			existingButtons.Add(unlockPanelContent.GetChild(i));
+		}
+		
+		Vector3 position = new(-750f + (tier * 300), 0f, 0f);
+
+		switch (targetType) {
+			case "Manual":
+				bool found = false;
+				foreach (Transform btn in existingButtons) {
+					if (btn.position.y == 380f) {
+						btn.position = new(btn.position.x, 450f, btn.position.z);
+						position = new(position.x, 310f, 0f);
+
+						found = true;
+						break;
+					}
+				}
+
+				if (!found) {
+					position = new(position.x, 380f, 0f);
+				}
+
+				break;
+		}
+
+		GameObject newBtnObj = Instantiate(unlockButtonPrefab, new(0f, 0f, 0f), Quaternion.Euler(0f, 0f, 0f), unlockPanelContent);
+		newBtnObj.GetComponent<RectTransform>().anchoredPosition = position;
+
+		Button newBtn = newBtnObj.GetComponent<Button>();
+		
+		newBtn.image.color = lockedButtonColor;
+		newBtn.interactable = false;
+		newBtn.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = title;
+		newBtn.transform.GetChild(1).GetComponent<TextMeshProUGUI>().text = $"Cost: ${cost:n2}";
+
+		switch (modifierTarget) {
+			case "powerGen":
+				newBtn.onClick.AddListener(() => {
+					psadHandler.SetPowerGenMultiplier(targetType, newValue);
+				});
+
+				newBtn.transform.GetChild(2).GetComponent<TextMeshProUGUI>().text = $"Power production modifier:\n{initValue:n2} → {newValue:n2}";
+				break;
+			case "fuelDelta":
+				newBtn.onClick.AddListener(() => {
+					psadHandler.SetMaxFuelDelta(targetType, Mathf.RoundToInt(newValue));
+				});
+
+				newBtn.transform.GetChild(2).GetComponent<TextMeshProUGUI>().text = $"Time between fuel uses:\n{initValue / 1e3f:n2} → {newValue / 1e3f:n2}";
+				break;
+		}
+
+		upgradeCosts.Add(cost);
+		upgradesPurchased.Add(false);
+	}
+
+	/*
 	 * Assign functions to all buttons on the UI
 	 */
-	private void AssignFunctionsToButtons() {
-		unlockButtons[0].onClick.AddListener(() => {
-			psadHandler.SetPowerGenMultiplier("Manual", 1.1f);
-			player.money -= upgradeCosts[0];
+	private void AssignGenericFunctionsToButtons() {
+		for (int i = 0; i < unlockPanelContent.childCount; ++i) {
+			Button button = unlockPanelContent.GetChild(i).GetComponent<Button>();
 
-			unlockButtons[0].image.color = purchasedButtonColor;
-			upgradesPurchased[0] = true;
-			unlockButtons[0].interactable = false;
-		});
-
-		unlockButtons[1].onClick.AddListener(() => {
-			psadHandler.SetMaxFuelDelta("Manual", 1100);
-			player.money -= upgradeCosts[1];
-
-			unlockButtons[1].image.color = purchasedButtonColor;
-			upgradesPurchased[1] = true;
-			unlockButtons[1].interactable = false;
-		});
+			// i is somehow becoming equal to 2 here -- FIX IMMEDIATELY
+			button.onClick.AddListener(() => {
+				player.money -= upgradeCosts[i];
+				upgradesPurchased[i] = true;
+				button.image.color = purchasedButtonColor;
+				button.interactable = false;
+			});
+		}
 	}
 
 	/*
