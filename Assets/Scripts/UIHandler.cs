@@ -25,6 +25,8 @@ public class UIHandler : MonoBehaviour {
 	private readonly Color lockedButtonColor = new(255f, 170f / 255f, 170f / 255f);
 	private readonly Color unlockedButtonColor = new(170f / 255f, 255f, 170f / 255f);
 	private readonly Color purchasedButtonColor = new(100f / 255f, 100f / 255f, 100f / 255f);
+	private readonly Color activePanelColor = new(170f / 255f, 255f, 170f / 255f);
+	private readonly Color inactivePanelColor = new(160f / 255f, 160f / 255f, 160f / 255f);
 
 	// Timer values
 	private DateTime unlockPanelLastToggled;
@@ -52,7 +54,6 @@ public class UIHandler : MonoBehaviour {
 		CreateUnlockPanelButton("Manual", 0, "Improved Gear Ratios", 3.00f, "powerGen", 1.0f, 1.1f);
 		Transform[] parentButton = { unlockPanelContent.GetChild(0) };
 		CreateUnlockPanelButton("Manual", 1, "Handcrank Lubricant", 5.00f, "fuelDelta", 1000, 1100, parentButton);
-		CreateUnlockPanelButton("Manual", 1, "test", 5.00f, "fuelDelta", 1000, 1100, parentButton);
 
 		// Assign the generic functionality to the unlock window buttons
 		AssignGenericFunctionsToButtons();
@@ -193,9 +194,15 @@ public class UIHandler : MonoBehaviour {
 	}
 
 	/*
-	 * Toggle visibility of the hover text panel
+	 * Toggle visibility and background color of the hover text panel
 	 */
-	public void ToggleHoverPanel(bool state) {
+	public void ToggleHoverPanel(bool state, bool hoveredObjIsActive = false) {
+		if (hoveredObjIsActive) {
+			hoverPanel.GetComponent<Image>().color = activePanelColor;
+		} else {
+			hoverPanel.GetComponent<Image>().color = inactivePanelColor;
+		}
+
 		hoverPanel.SetActive(state);
 	}
 

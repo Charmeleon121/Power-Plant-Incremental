@@ -29,6 +29,18 @@ public class PowerSupplier : MonoBehaviour {
 			maxFuelLevel = 1;
 			basePower = 1;
 			fuelLastUpdatedMaxDelta = 1000;
+		} else if (gameObject.name.Contains("Wood")) {
+			maxFuelLevel = 5;
+			basePower = 1.5f;
+			fuelLastUpdatedMaxDelta = 1750;
+		} else if (gameObject.name.Contains("Charcoal")) {
+			maxFuelLevel = 7;
+			basePower = 1.85f;
+			fuelLastUpdatedMaxDelta = 2000;
+		} else if (gameObject.name.Contains("Coal")) {
+			maxFuelLevel = 7;
+			basePower = 2.25f;
+			fuelLastUpdatedMaxDelta = 2000;
 		}
 
 		powerMultiplier = 1;
@@ -41,13 +53,16 @@ public class PowerSupplier : MonoBehaviour {
 	 * Update the fuel level and current activity state of the generator
 	 */
 	void Update() {
-		double delta = DateTime.UtcNow.Subtract(fuelLastUpdated).TotalMilliseconds;
-		if (delta >= fuelLastUpdatedMaxDelta) {
-			if (isGeneratorRunning) {
-				currentFuelLevel = Mathf.Max(0f, currentFuelLevel - 0.1f);
-			}
+		if (isGeneratorRunning) {
+			currentlyProducing = basePower * powerMultiplier;
 
-			fuelLastUpdated = DateTime.UtcNow;
+			double delta = DateTime.UtcNow.Subtract(fuelLastUpdated).TotalMilliseconds;
+			if (delta >= fuelLastUpdatedMaxDelta) {
+				currentFuelLevel = Mathf.Max(0f, currentFuelLevel - 0.1f);
+				fuelLastUpdated = DateTime.UtcNow;
+			}
+		} else {
+			currentlyProducing = 0f;
 		}
 
 		if (currentFuelLevel == 0) {
@@ -61,12 +76,10 @@ public class PowerSupplier : MonoBehaviour {
 	public void Activate() {
 		if (currentFuelLevel > 0) {
 			isGeneratorRunning = true;
-			currentlyProducing = basePower * powerMultiplier;
 		} else {
 			if (gameObject.name.Contains("Manual")) {
 				isGeneratorRunning = true;
 				currentFuelLevel = 1;
-				currentlyProducing = basePower * powerMultiplier;
 			}
 		}
 	}

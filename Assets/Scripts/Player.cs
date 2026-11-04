@@ -102,7 +102,7 @@ public class Player : MonoBehaviour {
 					activeState = "Inactive";
 				}
 
-				uiHandler.ToggleHoverPanel(true);
+				uiHandler.ToggleHoverPanel(true, psScript.isGeneratorRunning);
 				uiHandler.SetHoverText(hit.collider.name, activeState, psScript.currentFuelLevel, psScript.maxFuelLevel, psScript.currentlyProducing, psScript.powerMultiplier);
 			} else {
 				uiHandler.ToggleHoverPanel(false);
