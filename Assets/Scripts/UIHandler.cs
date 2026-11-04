@@ -118,8 +118,7 @@ public class UIHandler : MonoBehaviour {
 					if (ub.position[0] == position.x && ub.position[1] == 380f) {
 						Vector3 prevBtnPos = new(ub.position[0], 450f, 0f);
 						
-						// Somehow, these two are saving entirely different vectors.
-						btn.localPosition = prevBtnPos;
+						btn.GetComponent<RectTransform>().anchoredPosition = prevBtnPos;
 						ub.position = prevBtnPos;
 						
 						position = new(position.x, 310f, 0f);
