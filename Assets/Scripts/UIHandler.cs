@@ -20,7 +20,6 @@ public class UIHandler : MonoBehaviour {
 
 	// Upgrade costs, and whether the upgrades have been purchased
 	private List<float> upgradeCosts;
-	private List<bool> upgradesPurchased;
 
 	// Color values
 	private readonly Color lockedButtonColor = new(255f, 170f / 255f, 170f / 255f);
@@ -48,12 +47,12 @@ public class UIHandler : MonoBehaviour {
 		ToggleHoverPanel(false);
 
 		upgradeCosts = new();
-		upgradesPurchased = new();
 
 		// Create the buttons for the unlock window
 		CreateUnlockPanelButton("Manual", 0, "Improved Gear Ratios", 3.00f, "powerGen", 1.0f, 1.1f);
-		GameObject[] parentButton = { unlockPanelContent.GetChild(0).gameObject };
+		Transform[] parentButton = { unlockPanelContent.GetChild(0) };
 		CreateUnlockPanelButton("Manual", 1, "Handcrank Lubricant", 5.00f, "fuelDelta", 1000, 1100, parentButton);
+		CreateUnlockPanelButton("Manual", 1, "test", 5.00f, "fuelDelta", 1000, 1100, parentButton);
 
 		// Assign the generic functionality to the unlock window buttons
 		AssignGenericFunctionsToButtons();
@@ -72,11 +71,17 @@ public class UIHandler : MonoBehaviour {
 		fpsText.text = $"FPS: {1f / Time.deltaTime:n2}";
 
 		for (int i = 0; i < unlockPanelContent.childCount; ++i) {
-			Button button = unlockPanelContent.GetChild(i).GetComponent<Button>();
-
-			if (player.money >= upgradeCosts[i] && !upgradesPurchased[i]) {
-				button.image.color = unlockedButtonColor;
-				button.interactable = true;
+			try {
+				Button button = unlockPanelContent.GetChild(i).GetComponent<Button>();
+				UnlockButton ubScript = button.GetComponent<UnlockButton>();
+				
+				if (player.money >= upgradeCosts[i] && !ubScript.purchased) {
+					ubScript.unlocked = true;
+					button.image.color = unlockedButtonColor;
+					button.interactable = true;
+				}
+			} catch (Exception) {
+				continue;
 			}
 		}
 	}
@@ -95,7 +100,7 @@ public class UIHandler : MonoBehaviour {
 	 * newValue:       What the button will upgrade that value to
 	 * parents:        The button or buttons directly before this one in the upgrade tree structure - leave blank for starting upgrades
 	 */
-	private void CreateUnlockPanelButton(string targetType, int tier, string title, float cost, string modifierTarget, float initValue, float newValue, GameObject[] parents = null) {
+	private void CreateUnlockPanelButton(string targetType, int tier, string title, float cost, string modifierTarget, float initValue, float newValue, Transform[] parents = null) {
 		List<Transform> existingButtons = new();
 		for (int i = 0; i < unlockPanelContent.childCount; ++i) {
 			existingButtons.Add(unlockPanelContent.GetChild(i));
@@ -106,9 +111,17 @@ public class UIHandler : MonoBehaviour {
 		switch (targetType) {
 			case "Manual":
 				bool found = false;
+				
+				UnlockButton ub;
 				foreach (Transform btn in existingButtons) {
-					if (btn.position.y == 380f) {
-						btn.position = new(btn.position.x, 450f, btn.position.z);
+					ub = btn.gameObject.GetComponent<UnlockButton>();
+					if (ub.position[0] == position.x && ub.position[1] == 380f) {
+						Vector3 prevBtnPos = new(ub.position[0], 450f, 0f);
+						
+						// Somehow, these two are saving entirely different vectors.
+						btn.localPosition = prevBtnPos;
+						ub.position = prevBtnPos;
+						
 						position = new(position.x, 310f, 0f);
 
 						found = true;
@@ -125,6 +138,12 @@ public class UIHandler : MonoBehaviour {
 
 		GameObject newBtnObj = Instantiate(unlockButtonPrefab, new(0f, 0f, 0f), Quaternion.Euler(0f, 0f, 0f), unlockPanelContent);
 		newBtnObj.GetComponent<RectTransform>().anchoredPosition = position;
+		
+		UnlockButton ubScript = newBtnObj.GetComponent<UnlockButton>();
+		ubScript.position = position;
+		ubScript.parents = parents;
+		ubScript.unlocked = false;
+		ubScript.purchased = false;
 
 		Button newBtn = newBtnObj.GetComponent<Button>();
 		
@@ -151,7 +170,6 @@ public class UIHandler : MonoBehaviour {
 		}
 
 		upgradeCosts.Add(cost);
-		upgradesPurchased.Add(false);
 	}
 
 	/*
@@ -159,15 +177,19 @@ public class UIHandler : MonoBehaviour {
 	 */
 	private void AssignGenericFunctionsToButtons() {
 		for (int i = 0; i < unlockPanelContent.childCount; ++i) {
-			Button button = unlockPanelContent.GetChild(i).GetComponent<Button>();
+			try {
+				Button button = unlockPanelContent.GetChild(i).GetComponent<Button>();
 
-			int index = i;
-			button.onClick.AddListener(() => {
-				player.money -= upgradeCosts[index];
-				upgradesPurchased[index] = true;
-				button.image.color = purchasedButtonColor;
-				button.interactable = false;
-			});
+				int index = i;
+				button.onClick.AddListener(() => {
+					player.money -= upgradeCosts[index];
+					button.GetComponent<UnlockButton>().purchased = true;
+					button.image.color = purchasedButtonColor;
+					button.interactable = false;
+				});
+			} catch {
+				continue;
+			}
 		}
 	}
 
