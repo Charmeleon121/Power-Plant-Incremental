@@ -15,7 +15,7 @@ public class UIHandler : MonoBehaviour {
 
 	// UI elements
 	public TextMeshProUGUI powerStatsText, objNameText, objInfoText, moneyText, fpsText;
-	public GameObject hoverPanel, unlockPanel;
+	public GameObject hoverPanel, unlockPanel, pauseMenu;
 	public Transform unlockPanelContent;
 
 	// Color values
@@ -26,7 +26,7 @@ public class UIHandler : MonoBehaviour {
 	private readonly Color inactivePanelColor = new(160f / 255f, 160f / 255f, 160f / 255f);
 
 	// Timer values
-	private DateTime unlockPanelLastToggled;
+	private DateTime unlockPanelLastToggled, pauseMenuLastToggled;
 
 	/*
 	 * Start method
@@ -44,6 +44,11 @@ public class UIHandler : MonoBehaviour {
 
 		// Ensure the hover panel begins invisible
 		ToggleHoverPanel(false);
+		
+		// Ensure the pause menu begins invisible
+		pauseMenu.SetActive(false);
+		pauseMenuLastToggled = DateTime.UtcNow;
+		pauseMenu.transform.GetChild(1).gameObject.SetActive(false);
 
 		// Create the buttons for the unlock window
 		CreateUnlockPanelButton("Manual", 0, "Improved Gear Ratios", 3.00f, "powerGen", 1.0f, 1.1f);
@@ -252,6 +257,36 @@ public class UIHandler : MonoBehaviour {
 
 			ToggleCursorLockState(!unlockPanel.activeSelf);
 		}
+	}
+	
+	/*
+	 * Toggle visibility of the pause menu
+	 */
+	public void TogglePauseMenu() {
+		pauseMenu.transform.GetChild(1).gameObject.SetActive(false);
+		
+		double delta = DateTime.UtcNow.Subtract(pauseMenuLastToggled).TotalMilliseconds;
+		
+		if (delta >= 150) {
+			pauseMenuLastToggled = DateTime.UtcNow;
+			pauseMenu.SetActive(!pauseMenu.activeSelf);
+			player.lookAndMoveActive = !player.lookAndMoveActive;
+			
+			ToggleCursorLockState(!pauseMenu.activeSelf);
+			
+			if (pauseMenu.activeSelf) {
+				Time.timeScale = 0f;
+			} else {
+				Time.timeScale = 1f;
+			}
+		}
+	}
+	
+	/*
+	 * Quit the game
+	 */
+	public void QuitGame() {
+		Application.Quit();
 	}
 
 	/*

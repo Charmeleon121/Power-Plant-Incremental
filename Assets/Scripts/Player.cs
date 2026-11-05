@@ -8,7 +8,7 @@ public class Player : MonoBehaviour {
 
 	// Input actions
 	private InputSystem_Actions keybinds;
-	private InputAction useAction, moveAction, lookAction, unlockMenuAction;
+	private InputAction useAction, moveAction, lookAction, unlockMenuAction, pauseMenuAction;
 
 	// Variables relating to player movement
 	private Rigidbody rb;
@@ -40,6 +40,7 @@ public class Player : MonoBehaviour {
 		moveAction = InputSystem.actions.FindAction("Player/Move");
 		lookAction = InputSystem.actions.FindAction("Player/Look");
 		unlockMenuAction = InputSystem.actions.FindAction("Player/Unlock Menu");
+		pauseMenuAction = InputSystem.actions.FindAction("Player/Pause Menu");
 		
 		rb = GetComponent<Rigidbody>();
 		lookAndMoveActive = true;
@@ -56,6 +57,10 @@ public class Player : MonoBehaviour {
 		
 		if (unlockMenuAction.triggered) {
 			uiHandler.ToggleUnlockPanel();
+		}
+		
+		if (pauseMenuAction.triggered) {
+			uiHandler.TogglePauseMenu();
 		}
 	}
 
