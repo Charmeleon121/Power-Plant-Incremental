@@ -18,9 +18,6 @@ public class UIHandler : MonoBehaviour {
 	public GameObject hoverPanel, unlockPanel;
 	public Transform unlockPanelContent;
 
-	// Upgrade costs, and whether the upgrades have been purchased
-	private List<float> upgradeCosts;
-
 	// Color values
 	private readonly Color lockedButtonColor = new(255f, 170f / 255f, 170f / 255f);
 	private readonly Color unlockedButtonColor = new(170f / 255f, 255f, 170f / 255f);
@@ -48,12 +45,11 @@ public class UIHandler : MonoBehaviour {
 		// Ensure the hover panel begins invisible
 		ToggleHoverPanel(false);
 
-		upgradeCosts = new();
-
 		// Create the buttons for the unlock window
 		CreateUnlockPanelButton("Manual", 0, "Improved Gear Ratios", 3.00f, "powerGen", 1.0f, 1.1f);
-		Transform[] parentButton = { unlockPanelContent.GetChild(0) };
-		CreateUnlockPanelButton("Manual", 1, "Handcrank Lubricant", 5.00f, "fuelDelta", 1000, 1100, parentButton);
+		CreateUnlockPanelButton("Manual", 1, "Handcrank Lubricant", 5.00f, "fuelDelta", 1000, 1100, new Transform[] {
+			unlockPanelContent.GetChild(0)
+		});
 
 		// Assign the generic functionality to the unlock window buttons
 		AssignGenericFunctionsToButtons();
@@ -72,17 +68,37 @@ public class UIHandler : MonoBehaviour {
 		fpsText.text = $"FPS: {1f / Time.deltaTime:n2}";
 
 		for (int i = 0; i < unlockPanelContent.childCount; ++i) {
-			try {
-				Button button = unlockPanelContent.GetChild(i).GetComponent<Button>();
-				UnlockButton ubScript = button.GetComponent<UnlockButton>();
+			Button button = unlockPanelContent.GetChild(i).GetComponent<Button>();
+			UnlockButton ubScript = button.GetComponent<UnlockButton>();
 				
-				if (player.money >= upgradeCosts[i] && !ubScript.purchased) {
+			if (player.money >= ubScript.cost && !ubScript.purchased) {
+				if (ubScript.parents != null) {
+					int unlockedParentCount = 0;
+						
+					foreach (Transform parent in ubScript.parents) {
+						if (parent.GetComponent<UnlockButton>().purchased) {
+							++unlockedParentCount;
+						}
+					}
+						
+					if (unlockedParentCount == ubScript.parents.Length) {
+						// All parents unlocked
+						ubScript.unlocked = true;
+						button.image.color = unlockedButtonColor;
+						button.interactable = true;
+					}
+				} else {
 					ubScript.unlocked = true;
 					button.image.color = unlockedButtonColor;
 					button.interactable = true;
 				}
-			} catch (Exception) {
-				continue;
+			} else if (player.money < ubScript.cost && !ubScript.purchased) {
+				ubScript.unlocked = false;
+				button.image.color = lockedButtonColor;
+				button.interactable = false;
+			} else {
+				button.image.color = purchasedButtonColor;
+				button.interactable = false;
 			}
 		}
 	}
@@ -109,32 +125,33 @@ public class UIHandler : MonoBehaviour {
 		
 		Vector3 position = new(-750f + (tier * 300), 0f, 0f);
 
+		float[] yValues;
 		switch (targetType) {
-			case "Manual":
-				bool found = false;
-				
-				UnlockButton ub;
-				foreach (Transform btn in existingButtons) {
-					ub = btn.gameObject.GetComponent<UnlockButton>();
-					if (ub.position[0] == position.x && ub.position[1] == 380f) {
-						Vector3 prevBtnPos = new(ub.position[0], 450f, 0f);
-						
-						btn.GetComponent<RectTransform>().anchoredPosition = prevBtnPos;
-						ub.position = prevBtnPos;
-						
-						position = new(position.x, 310f, 0f);
-
-						found = true;
-						break;
-					}
-				}
-
-				if (!found) {
-					position = new(position.x, 380f, 0f);
-				}
-
+			default:
+				// Manual generators covered here
+				yValues = new float[]{ 310f, 380f, 450f };
 				break;
 		}
+		
+		bool found = false;		
+		UnlockButton ub;
+		foreach (Transform btn in existingButtons) {
+			ub = btn.gameObject.GetComponent<UnlockButton>();
+			if (ub.position[0] == position.x && ub.position[1] == yValues[1]) {
+				Vector3 prevBtnPos = new(ub.position[0], yValues[2], 0f);
+					
+				btn.GetComponent<RectTransform>().anchoredPosition = prevBtnPos;
+				ub.position = prevBtnPos;
+						
+				position = new(position.x, yValues[0], 0f);
+				found = true;
+				break;
+			}
+		}
+
+		if (!found) {
+			position = new(position.x, yValues[1], 0f);
+		}		
 
 		GameObject newBtnObj = Instantiate(unlockButtonPrefab, new(0f, 0f, 0f), Quaternion.Euler(0f, 0f, 0f), unlockPanelContent);
 		newBtnObj.GetComponent<RectTransform>().anchoredPosition = position;
@@ -144,6 +161,7 @@ public class UIHandler : MonoBehaviour {
 		ubScript.parents = parents;
 		ubScript.unlocked = false;
 		ubScript.purchased = false;
+		ubScript.cost = cost;
 
 		Button newBtn = newBtnObj.GetComponent<Button>();
 		
@@ -168,8 +186,6 @@ public class UIHandler : MonoBehaviour {
 				newBtn.transform.GetChild(2).GetComponent<TextMeshProUGUI>().text = $"Time between fuel uses:\n{initValue / 1e3f:n2} → {newValue / 1e3f:n2}";
 				break;
 		}
-
-		upgradeCosts.Add(cost);
 	}
 
 	/*
@@ -177,19 +193,16 @@ public class UIHandler : MonoBehaviour {
 	 */
 	private void AssignGenericFunctionsToButtons() {
 		for (int i = 0; i < unlockPanelContent.childCount; ++i) {
-			try {
-				Button button = unlockPanelContent.GetChild(i).GetComponent<Button>();
+			Button button = unlockPanelContent.GetChild(i).GetComponent<Button>();
+			UnlockButton ubScript = button.GetComponent<UnlockButton>();
 
-				int index = i;
-				button.onClick.AddListener(() => {
-					player.money -= upgradeCosts[index];
-					button.GetComponent<UnlockButton>().purchased = true;
-					button.image.color = purchasedButtonColor;
-					button.interactable = false;
-				});
-			} catch {
-				continue;
-			}
+			int index = i;
+			button.onClick.AddListener(() => {
+				player.money -= ubScript.cost;
+				ubScript.purchased = true;
+				button.image.color = purchasedButtonColor;
+				button.interactable = false;
+			});
 		}
 	}
 
