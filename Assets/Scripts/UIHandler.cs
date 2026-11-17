@@ -1,4 +1,3 @@
-using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using TMPro;
@@ -9,14 +8,16 @@ public class UIHandler : MonoBehaviour {
 	// External scripts
 	private Player player;
 	private PowerSupplyAndDemandHandler psadHandler;
+	private BuildHandler buildHandler;
 
 	// UI element prefabs
 	private GameObject unlockButtonPrefab;
 
 	// UI elements
 	public TextMeshProUGUI powerStatsText, objNameText, objInfoText, moneyText, fpsText;
-	public GameObject hoverPanel, unlockPanel, pauseMenu;
+	public GameObject hoverPanel, unlockPanel, pauseMenu, buyMenu;
 	public Transform unlockPanelContent;
+	public Button manualGeneratorButton, woodGeneratorButton;
 
 	// Color values
 	private readonly Color lockedButtonColor = new(255f, 170f / 255f, 170f / 255f);
@@ -26,7 +27,7 @@ public class UIHandler : MonoBehaviour {
 	private readonly Color inactivePanelColor = new(160f / 255f, 160f / 255f, 160f / 255f);
 
 	// Timer values
-	private DateTime unlockPanelLastToggled, pauseMenuLastToggled;
+	private DateTime unlockPanelLastToggled, pauseMenuLastToggled, buyMenuLastToggled;
 
 	/*
 	 * Start method
@@ -35,6 +36,7 @@ public class UIHandler : MonoBehaviour {
 		// Initialize the external script variables
 		player = GameObject.Find("Player").GetComponent<Player>();
 		psadHandler = GetComponent<PowerSupplyAndDemandHandler>();
+		buildHandler = GetComponent<BuildHandler>();
 
 		unlockButtonPrefab = Resources.Load<GameObject>("UI Prefabs/Unlock Tree Button");
 		
@@ -50,6 +52,10 @@ public class UIHandler : MonoBehaviour {
 		pauseMenuLastToggled = DateTime.UtcNow;
 		pauseMenu.transform.GetChild(1).gameObject.SetActive(false);
 
+		// Ensure the buy menu begins invisible
+		buyMenu.SetActive(false);
+		buyMenuLastToggled = DateTime.UtcNow;
+
 		// Create the buttons for the unlock window
 		CreateUnlockPanelButton("Manual", 0, "Improved Gear Ratios", 3.00f, "powerGen", 1.0f, 1.1f);
 		CreateUnlockPanelButton("Manual", 1, "Handcrank Lubricant", 5.00f, "fuelDelta", 1000, 1100, new Transform[] {
@@ -57,7 +63,10 @@ public class UIHandler : MonoBehaviour {
 		});
 
 		// Assign the generic functionality to the unlock window buttons
-		AssignGenericFunctionsToButtons();
+		AssignGenericFunctionsToUnlockButtons();
+
+		// Assign the functionality to the buy window buttons
+		AssignFunctionsToBuyButtons();
 
 		// Lock the cursor to the window and hide it
 		ToggleCursorLockState(true);
@@ -72,40 +81,8 @@ public class UIHandler : MonoBehaviour {
 		
 		fpsText.text = $"FPS: {1f / Time.deltaTime:n2}";
 
-		for (int i = 0; i < unlockPanelContent.childCount; ++i) {
-			Button button = unlockPanelContent.GetChild(i).GetComponent<Button>();
-			UnlockButton ubScript = button.GetComponent<UnlockButton>();
-				
-			if (player.money >= ubScript.cost && !ubScript.purchased) {
-				if (ubScript.parents != null) {
-					int unlockedParentCount = 0;
-						
-					foreach (Transform parent in ubScript.parents) {
-						if (parent.GetComponent<UnlockButton>().purchased) {
-							++unlockedParentCount;
-						}
-					}
-						
-					if (unlockedParentCount == ubScript.parents.Length) {
-						// All parents unlocked
-						ubScript.unlocked = true;
-						button.image.color = unlockedButtonColor;
-						button.interactable = true;
-					}
-				} else {
-					ubScript.unlocked = true;
-					button.image.color = unlockedButtonColor;
-					button.interactable = true;
-				}
-			} else if (player.money < ubScript.cost && !ubScript.purchased) {
-				ubScript.unlocked = false;
-				button.image.color = lockedButtonColor;
-				button.interactable = false;
-			} else {
-				button.image.color = purchasedButtonColor;
-				button.interactable = false;
-			}
-		}
+		UpdateUnlockPanel();
+		UpdateBuyMenu();
 	}
 
 	/*
@@ -194,9 +171,9 @@ public class UIHandler : MonoBehaviour {
 	}
 
 	/*
-	 * Assign functions to all buttons on the UI
+	 * Assign functions to all buttons on the unlock window
 	 */
-	private void AssignGenericFunctionsToButtons() {
+	private void AssignGenericFunctionsToUnlockButtons() {
 		for (int i = 0; i < unlockPanelContent.childCount; ++i) {
 			Button button = unlockPanelContent.GetChild(i).GetComponent<Button>();
 			UnlockButton ubScript = button.GetComponent<UnlockButton>();
@@ -208,6 +185,74 @@ public class UIHandler : MonoBehaviour {
 				button.image.color = purchasedButtonColor;
 				button.interactable = false;
 			});
+		}
+	}
+
+	/*
+	 * Assign functions to all buttons on the buy window
+	 */
+	private void AssignFunctionsToBuyButtons() {
+		manualGeneratorButton.onClick.AddListener(() => {
+			player.money -= 10;
+			buildHandler.EnterBuildMode("Manual Generator");
+			ToggleBuyMenu();
+		});
+	}
+
+	/*
+	 * Update the upgrade panel
+	 */
+	private void UpdateUnlockPanel() {
+		for (int i = 0; i < unlockPanelContent.childCount; ++i) {
+			Button button = unlockPanelContent.GetChild(i).GetComponent<Button>();
+			UnlockButton ubScript = button.GetComponent<UnlockButton>();
+
+			if (player.money >= ubScript.cost && !ubScript.purchased) {
+				if (ubScript.parents != null) {
+					int unlockedParentCount = 0;
+
+					foreach (Transform parent in ubScript.parents) {
+						if (parent.GetComponent<UnlockButton>().purchased) {
+							++unlockedParentCount;
+						}
+					}
+
+					if (unlockedParentCount == ubScript.parents.Length) {
+						// All parents unlocked
+						ubScript.unlocked = true;
+						button.image.color = unlockedButtonColor;
+						button.interactable = true;
+					}
+				} else {
+					ubScript.unlocked = true;
+					button.image.color = unlockedButtonColor;
+					button.interactable = true;
+				}
+			} else if (player.money < ubScript.cost && !ubScript.purchased) {
+				ubScript.unlocked = false;
+				button.image.color = lockedButtonColor;
+				button.interactable = false;
+			} else {
+				button.image.color = purchasedButtonColor;
+				button.interactable = false;
+			}
+		}
+	}
+
+	/*
+	 * Update the buy menu
+	 */
+	private void UpdateBuyMenu() {
+		if (player.money >= 10f) {
+			manualGeneratorButton.interactable = true;
+		} else {
+			manualGeneratorButton.interactable = false;
+		}
+
+		if (player.money >= 25f) {
+			woodGeneratorButton.interactable = true;
+		} else {
+			woodGeneratorButton.interactable = false;
 		}
 	}
 
@@ -279,6 +324,21 @@ public class UIHandler : MonoBehaviour {
 			} else {
 				Time.timeScale = 1f;
 			}
+		}
+	}
+
+	/*
+	 * Toggle visibility of the buy menu
+	 */
+	public void ToggleBuyMenu() {
+		double delta = DateTime.UtcNow.Subtract(buyMenuLastToggled).TotalMilliseconds;
+
+		if (delta >= 150) {
+			buyMenuLastToggled = DateTime.UtcNow;
+			buyMenu.SetActive(!buyMenu.activeSelf);
+			player.lookAndMoveActive = !player.lookAndMoveActive;
+
+			ToggleCursorLockState(!buyMenu.activeSelf);
 		}
 	}
 	

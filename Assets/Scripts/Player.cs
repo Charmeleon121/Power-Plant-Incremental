@@ -8,7 +8,7 @@ public class Player : MonoBehaviour {
 
 	// Input actions
 	private InputSystem_Actions keybinds;
-	private InputAction useAction, moveAction, lookAction, unlockMenuAction, pauseMenuAction;
+	private InputAction useAction, moveAction, lookAction, unlockMenuAction, pauseMenuAction, buyMenuAction;
 
 	// Variables relating to player movement
 	private Rigidbody rb;
@@ -41,6 +41,7 @@ public class Player : MonoBehaviour {
 		lookAction = InputSystem.actions.FindAction("Player/Look");
 		unlockMenuAction = InputSystem.actions.FindAction("Player/Unlock Menu");
 		pauseMenuAction = InputSystem.actions.FindAction("Player/Pause Menu");
+		buyMenuAction = InputSystem.actions.FindAction("Player/Build Menu");
 		
 		rb = GetComponent<Rigidbody>();
 		lookAndMoveActive = true;
@@ -61,6 +62,10 @@ public class Player : MonoBehaviour {
 		
 		if (pauseMenuAction.triggered) {
 			uiHandler.TogglePauseMenu();
+		}
+
+		if (buyMenuAction.triggered) {
+			uiHandler.ToggleBuyMenu();
 		}
 	}
 
