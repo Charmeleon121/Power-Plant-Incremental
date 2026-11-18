@@ -4,17 +4,19 @@ using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour {
 	// External scripts
+	private GameObject eventSystem;
 	private UIHandler uiHandler;
+	private BuildHandler buildHandler;
 
 	// Input actions
 	private InputSystem_Actions keybinds;
-	private InputAction useAction, moveAction, lookAction, unlockMenuAction, pauseMenuAction, buyMenuAction;
+	private InputAction useAction, moveAction, lookAction, unlockMenuAction, pauseMenuAction, buyMenuAction, clickAction, rotateLeftAction, rotateRightAction, gridSnapAction;
 
 	// Variables relating to player movement
 	private Rigidbody rb;
 	private readonly float walkSpeed = 5f;
 	private readonly float lookSpeed = 10f;
-	public bool lookAndMoveActive;
+	public bool lookAndMoveActive, inBuildMode;
 
 	// Player inventory and monehy
 	public float money = 0f;
@@ -33,8 +35,11 @@ public class Player : MonoBehaviour {
 	 */
 	private void Start() {
 		DontDestroyOnLoad(this);
+		
+		eventSystem = GameObject.Find("EventSystem");
 
-		uiHandler = GameObject.Find("EventSystem").GetComponent<UIHandler>();
+		uiHandler = eventSystem.GetComponent<UIHandler>();
+		buildHandler = eventSystem.GetComponent<BuildHandler>();
 
 		useAction = InputSystem.actions.FindAction("Player/Use");
 		moveAction = InputSystem.actions.FindAction("Player/Move");
@@ -42,9 +47,14 @@ public class Player : MonoBehaviour {
 		unlockMenuAction = InputSystem.actions.FindAction("Player/Unlock Menu");
 		pauseMenuAction = InputSystem.actions.FindAction("Player/Pause Menu");
 		buyMenuAction = InputSystem.actions.FindAction("Player/Build Menu");
+		clickAction = InputSystem.actions.FindAction("Player/Click");
+		rotateLeftAction = InputSystem.actions.FindAction("Player/Rotate Left");
+		rotateRightAction = InputSystem.actions.FindAction("Player/Rotate Right");
+		gridSnapAction = InputSystem.actions.FindAction("Player/Snap to Grid");
 		
 		rb = GetComponent<Rigidbody>();
 		lookAndMoveActive = true;
+		inBuildMode = false;
 	}
 
 	/*
@@ -54,18 +64,31 @@ public class Player : MonoBehaviour {
 		if (lookAndMoveActive) {
 			Look();
 			Interaction();
-		}
 		
-		if (unlockMenuAction.triggered) {
-			uiHandler.ToggleUnlockPanel();
-		}
+			if (unlockMenuAction.triggered) {
+				uiHandler.ToggleUnlockPanel();
+			}
 		
-		if (pauseMenuAction.triggered) {
-			uiHandler.TogglePauseMenu();
-		}
+			if (pauseMenuAction.triggered) {
+				uiHandler.TogglePauseMenu();
+			}
 
-		if (buyMenuAction.triggered) {
-			uiHandler.ToggleBuyMenu();
+			if (buyMenuAction.triggered && !inBuildMode) {
+				uiHandler.ToggleBuyMenu();
+			}
+		
+			if (inBuildMode) {
+				if (clickAction.triggered) {
+					buildHandler.Build();
+				} else if ((buildHandler.snapEnabled && rotateLeftAction.triggered) || (!buildHandler.snapEnabled && rotateLeftAction.IsPressed())) {
+					buildHandler.Rotate(1);
+				} else if ((buildHandler.snapEnabled && rotateRightAction.triggered) || (!buildHandler.snapEnabled && rotateRightAction.IsPressed())) {
+					buildHandler.Rotate(-1);
+				} else if (gridSnapAction.triggered) {
+					uiHandler.ToggleSnapToGridIndicator();
+					buildHandler.snapEnabled = !buildHandler.snapEnabled;
+				}
+			}
 		}
 	}
 
@@ -151,6 +174,19 @@ public class Player : MonoBehaviour {
 		} else {
 			rb.linearVelocity = Vector3.zero;
 		}
+	}
+	
+	/*
+	 * Get the world coordinates of where the player is currently looking
+	 */
+	public Vector3 GetLookCoords() {
+		Vector3 rawScreenPos = new Vector3(
+			Mouse.current.position.x.ReadValue(),
+			Mouse.current.position.y.ReadValue(),
+			3f
+		);
+		
+		return Camera.main.ScreenToWorldPoint(rawScreenPos);
 	}
 
 	/*

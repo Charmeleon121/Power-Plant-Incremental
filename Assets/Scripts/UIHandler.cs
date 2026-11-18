@@ -14,7 +14,7 @@ public class UIHandler : MonoBehaviour {
 	private GameObject unlockButtonPrefab;
 
 	// UI elements
-	public TextMeshProUGUI powerStatsText, objNameText, objInfoText, moneyText, fpsText;
+	public TextMeshProUGUI powerStatsText, objNameText, objInfoText, moneyText, fpsText, snapIndicatorText;
 	public GameObject hoverPanel, unlockPanel, pauseMenu, buyMenu;
 	public Transform unlockPanelContent;
 	public Button manualGeneratorButton, woodGeneratorButton;
@@ -67,6 +67,9 @@ public class UIHandler : MonoBehaviour {
 
 		// Assign the functionality to the buy window buttons
 		AssignFunctionsToBuyButtons();
+		
+		// Hide the snap-to-grid indicator
+		snapIndicatorText.gameObject.SetActive(false);
 
 		// Lock the cursor to the window and hide it
 		ToggleCursorLockState(true);
@@ -340,6 +343,13 @@ public class UIHandler : MonoBehaviour {
 
 			ToggleCursorLockState(!buyMenu.activeSelf);
 		}
+	}
+	
+	/*
+	 * Toggle visibility of the snap-to-grid indicator
+	 */
+	public void ToggleSnapToGridIndicator() {
+		snapIndicatorText.gameObject.SetActive(!snapIndicatorText.gameObject.activeSelf);
 	}
 	
 	/*
