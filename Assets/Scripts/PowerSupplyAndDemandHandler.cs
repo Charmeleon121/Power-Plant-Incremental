@@ -18,7 +18,7 @@ public class PowerSupplyAndDemandHandler : MonoBehaviour {
 	 * Start method
 	 */
 	void Start() {
-		uiHandler = GameObject.Find("EventSystem").GetComponent<UIHandler>();
+		uiHandler = GetComponent<UIHandler>();
 		player = GameObject.Find("Player").GetComponent<Player>();
 
 		// Initial power demand of 100 W
@@ -32,17 +32,19 @@ public class PowerSupplyAndDemandHandler : MonoBehaviour {
 	 * Update method
 	 */
 	void Update() {
-		double delta = DateTime.UtcNow.Subtract(uiLastUpdated).TotalSeconds;
+		if (player.lookAndMoveActive) {
+			double delta = DateTime.UtcNow.Subtract(uiLastUpdated).TotalSeconds;
 
-		if (delta >= 1) {
-			UpdatePowerDisplay();
-			uiLastUpdated = DateTime.UtcNow;
-		}
+			if (delta >= 1) {
+				UpdatePowerDisplay();
+				uiLastUpdated = DateTime.UtcNow;
+			}
 		
-		if (powerDemand == 0) {
-			++quotasMet;
-			powerDemand = Mathf.Floor(100 * Mathf.Pow(quotasMet, Mathf.Exp(1) / 1.3f));
-			player.money += 10 * Mathf.Pow(quotasMet, Mathf.Exp(1) / 2f);
+			if (powerDemand == 0) {
+				++quotasMet;
+				powerDemand = Mathf.Floor(100 * Mathf.Pow(quotasMet, Mathf.Exp(1) / 1.3f));
+				player.money += 10 * Mathf.Pow(quotasMet, Mathf.Exp(1) / 2f);
+			}
 		}
 	}
 

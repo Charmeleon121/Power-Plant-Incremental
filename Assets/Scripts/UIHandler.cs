@@ -15,7 +15,7 @@ public class UIHandler : MonoBehaviour {
 
 	// UI elements
 	public TextMeshProUGUI powerStatsText, objNameText, objInfoText, moneyText, fpsText, snapIndicatorText;
-	public GameObject hoverPanel, unlockPanel, pauseMenu, buyMenu;
+	public GameObject hoverPanel, unlockPanel, pauseMenu, buyMenu, buildKeybindMenu;
 	public Transform unlockPanelContent;
 	public Button manualGeneratorButton, woodGeneratorButton;
 
@@ -70,6 +70,9 @@ public class UIHandler : MonoBehaviour {
 		
 		// Hide the snap-to-grid indicator
 		snapIndicatorText.gameObject.SetActive(false);
+		
+		// Hide the building keybind menu
+		buildKeybindMenu.SetActive(false);
 
 		// Lock the cursor to the window and hide it
 		ToggleCursorLockState(true);
@@ -86,6 +89,8 @@ public class UIHandler : MonoBehaviour {
 
 		UpdateUnlockPanel();
 		UpdateBuyMenu();
+		
+		buildKeybindMenu.SetActive(player.inBuildMode);
 	}
 
 	/*
