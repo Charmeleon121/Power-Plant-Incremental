@@ -23,7 +23,10 @@ public class BuildHandler : MonoBehaviour {
 	void Update() {
 		if (activeGhost != null && playerScript.lookAndMoveActive) {
 			Vector3 playerLookPos = playerScript.GetLookCoords();
-			playerLookPos.y = 0.5f; // TODO: Adjust this based on model size when models are implemented
+
+			if (activeGhost.name.Contains("Manual")) {
+				playerLookPos.y = 1.198f;
+			}
 			
 			if (snapEnabled) {
 				playerLookPos.x = Mathf.RoundToInt(playerLookPos.x);
@@ -45,7 +48,7 @@ public class BuildHandler : MonoBehaviour {
 		
 		switch (type) {
 			case "Manual Generator":
-				playerLookPos.y = 0.5f; // TODO: Adjust based on final model size
+				playerLookPos.y = 1.198f; // TODO: Adjust based on final model size
 				activeGhost = Instantiate(manualGeneratorGhostPrefab, playerLookPos, Quaternion.Euler(0f, 0f, 0f));
 				activeGhost.tag = "Ghost";
 				break;

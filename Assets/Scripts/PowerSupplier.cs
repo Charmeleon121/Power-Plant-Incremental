@@ -25,19 +25,19 @@ public class PowerSupplier : MonoBehaviour {
 		currentFuelLevel = 0;
 		currentlyProducing = 0;
 
-		if (gameObject.name.Contains("Manual")) {
+		if (name.Contains("Manual")) {
 			maxFuelLevel = 1;
 			basePower = 1;
 			fuelLastUpdatedMaxDelta = 1000;
-		} else if (gameObject.name.Contains("Wood")) {
+		} else if (name.Contains("Wood")) {
 			maxFuelLevel = 5;
 			basePower = 1.5f;
 			fuelLastUpdatedMaxDelta = 1750;
-		} else if (gameObject.name.Contains("Charcoal")) {
+		} else if (name.Contains("Charcoal")) {
 			maxFuelLevel = 7;
 			basePower = 1.85f;
 			fuelLastUpdatedMaxDelta = 2000;
-		} else if (gameObject.name.Contains("Coal")) {
+		} else if (name.Contains("Coal")) {
 			maxFuelLevel = 7;
 			basePower = 2.25f;
 			fuelLastUpdatedMaxDelta = 2000;
@@ -71,6 +71,23 @@ public class PowerSupplier : MonoBehaviour {
 	}
 
 	/*
+	 * Handle any moving parts or other physics-related calculations
+	 */
+	void FixedUpdate() {
+		Transform movingPart;
+		if (isGeneratorRunning) {
+			Vector3 currentRotation;
+			if (name.Contains("Manual")) {
+				movingPart = transform.GetChild(1);
+				currentRotation = GetMovingPartRotation(movingPart);
+
+				// Base speed on the fuel ratio, so it slows down over time (as if only generating while moving)
+				movingPart.localRotation = Quaternion.Euler(currentRotation.x, currentRotation.y, currentRotation.z + GetFuelRatio());
+			}
+		}
+	}
+
+	/*
 	 * Activate the generator
 	 */
 	public void Activate() {
@@ -90,5 +107,23 @@ public class PowerSupplier : MonoBehaviour {
 	public void Deactivate() {
 		isGeneratorRunning = false;
 		currentlyProducing = 0;
+	}
+
+	/*
+	 * Get the current fuel ratio of the generator
+	 */
+	private float GetFuelRatio() {
+		return currentFuelLevel / maxFuelLevel;
+	}
+
+	/*
+	 * Get the current rotation of a moving part in Euler angles
+	 */
+	private Vector3 GetMovingPartRotation(Transform part) {
+		float initRotX = part.localRotation.eulerAngles.x;
+		float initRotY = part.localRotation.eulerAngles.y;
+		float initRotZ = part.localRotation.eulerAngles.z;
+
+		return new(initRotX, initRotY, initRotZ);
 	}
 }
