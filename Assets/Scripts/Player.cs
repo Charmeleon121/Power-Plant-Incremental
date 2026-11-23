@@ -180,7 +180,7 @@ public class Player : MonoBehaviour {
 	 * Get the world coordinates of where the player is currently looking
 	 */
 	public Vector3 GetLookCoords() {
-		Vector3 rawScreenPos = new Vector3(
+		Vector3 rawScreenPos = new(
 			Mouse.current.position.x.ReadValue(),
 			Mouse.current.position.y.ReadValue(),
 			3f

@@ -25,22 +25,27 @@ public class PowerSupplier : MonoBehaviour {
 		currentFuelLevel = 0;
 		currentlyProducing = 0;
 
-		if (name.Contains("Manual")) {
-			maxFuelLevel = 1;
-			basePower = 1;
-			fuelLastUpdatedMaxDelta = 1000;
-		} else if (name.Contains("Wood")) {
-			maxFuelLevel = 5;
-			basePower = 1.5f;
-			fuelLastUpdatedMaxDelta = 1750;
-		} else if (name.Contains("Charcoal")) {
-			maxFuelLevel = 7;
-			basePower = 1.85f;
-			fuelLastUpdatedMaxDelta = 2000;
-		} else if (name.Contains("Coal")) {
-			maxFuelLevel = 7;
-			basePower = 2.25f;
-			fuelLastUpdatedMaxDelta = 2000;
+		switch (name) {
+			case "Manual Generator":
+				maxFuelLevel = 1;
+				basePower = 1;
+				fuelLastUpdatedMaxDelta = 1000;
+				break;
+			case "Wood-burning Generator":
+				maxFuelLevel = 5;
+				basePower = 1.5f;
+				fuelLastUpdatedMaxDelta = 1750;
+				break;
+			case "Charcoal-burning Generator":
+				maxFuelLevel = 7;
+				basePower = 1.85f;
+				fuelLastUpdatedMaxDelta = 2000;
+				break;
+			case "Coal-burning Generator":
+				maxFuelLevel = 7;
+				basePower = 2.25f;
+				fuelLastUpdatedMaxDelta = 2000;
+				break;
 		}
 
 		powerMultiplier = 1;
@@ -77,12 +82,15 @@ public class PowerSupplier : MonoBehaviour {
 		Transform movingPart;
 		if (isGeneratorRunning) {
 			Vector3 currentRotation;
-			if (name.Contains("Manual")) {
-				movingPart = transform.GetChild(1);
-				currentRotation = GetMovingPartRotation(movingPart);
 
-				// Base speed on the fuel ratio, so it slows down over time (as if only generating while moving)
-				movingPart.localRotation = Quaternion.Euler(currentRotation.x, currentRotation.y, currentRotation.z + GetFuelRatio());
+			switch (name) {
+				case "Manual Generator":
+					movingPart = transform.GetChild(1);
+					currentRotation = GetMovingPartRotation(movingPart);
+
+					// Base speed on the fuel ratio, so it slows down over time (as if only generating while moving)
+					movingPart.localRotation = Quaternion.Euler(currentRotation.x, currentRotation.y, currentRotation.z + GetFuelRatio());
+					break;
 			}
 		}
 	}

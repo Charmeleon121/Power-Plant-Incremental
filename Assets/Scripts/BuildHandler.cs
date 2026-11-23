@@ -3,14 +3,16 @@ using UnityEngine;
 public class BuildHandler : MonoBehaviour {
 	private Player playerScript;
 	
-	private GameObject manualGeneratorPrefab, manualGeneratorGhostPrefab, woodGeneratorPrefab, woodGeneratorGhostPrefab;
+	private GameObject powerPolePrefab, powerPoleGhostPrefab, manualGeneratorPrefab, manualGeneratorGhostPrefab, woodGeneratorPrefab, woodGeneratorGhostPrefab;
 	private GameObject activeGhost;
 	
 	public bool snapEnabled = false;
 
 	void Start() {
 		playerScript = GameObject.Find("Player").GetComponent<Player>();
-		
+
+		powerPolePrefab = Resources.Load<GameObject>("Prefabs/Power Pole");
+		powerPoleGhostPrefab = Resources.Load<GameObject>("Prefabs/Power Pole Ghost");
 		manualGeneratorPrefab = Resources.Load<GameObject>("Prefabs/Manual Generator");
 		manualGeneratorGhostPrefab = Resources.Load<GameObject>("Prefabs/Manual Generator Ghost");
 		
@@ -24,8 +26,13 @@ public class BuildHandler : MonoBehaviour {
 		if (activeGhost != null && playerScript.lookAndMoveActive) {
 			Vector3 playerLookPos = playerScript.GetLookCoords();
 
-			if (activeGhost.name.Contains("Manual")) {
-				playerLookPos.y = 1.198f;
+			switch (activeGhost.name) {
+				case "Power Pole":
+					playerLookPos.y = 0.25f;
+					break;
+				case "Manual Generator":
+					playerLookPos.y = 1.198f;
+					break;
 			}
 			
 			if (snapEnabled) {
@@ -47,8 +54,13 @@ public class BuildHandler : MonoBehaviour {
 		Vector3 playerLookPos = playerScript.GetLookCoords();
 		
 		switch (type) {
+			case "Power Pole":
+				playerLookPos.y = 0.25f;
+				activeGhost = Instantiate(powerPoleGhostPrefab, playerLookPos, Quaternion.Euler(0f, 0f, 0f));
+				activeGhost.tag = "Ghost";
+				break;
 			case "Manual Generator":
-				playerLookPos.y = 1.198f; // TODO: Adjust based on final model size
+				playerLookPos.y = 1.198f;
 				activeGhost = Instantiate(manualGeneratorGhostPrefab, playerLookPos, Quaternion.Euler(0f, 0f, 0f));
 				activeGhost.tag = "Ghost";
 				break;
@@ -59,13 +71,24 @@ public class BuildHandler : MonoBehaviour {
 	 * Replace an existing ghost object with its constructed counterpart
 	 */
 	public void Build() {
-		if (activeGhost.name.Contains("Manual")) {
-			Instantiate(manualGeneratorPrefab, activeGhost.transform.position, activeGhost.transform.rotation);
+		GameObject targetPrefab = null;
+
+		switch (activeGhost.name) {
+			case "Power Pole":
+				targetPrefab = powerPolePrefab;
+				break;
+			case "Manual Generator":
+				targetPrefab = manualGeneratorPrefab;
+				break;
 		}
-		
-		playerScript.inBuildMode = false;
-		Destroy(activeGhost);
-		activeGhost = null;
+
+		if (targetPrefab != null) {
+			Instantiate(targetPrefab, activeGhost.transform.position, activeGhost.transform.rotation);
+
+			playerScript.inBuildMode = false;
+			Destroy(activeGhost);
+			activeGhost = null;
+		}
 	}
 	
 	/*

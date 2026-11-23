@@ -17,7 +17,7 @@ public class UIHandler : MonoBehaviour {
 	public TextMeshProUGUI powerStatsText, objNameText, objInfoText, moneyText, fpsText, snapIndicatorText;
 	public GameObject hoverPanel, unlockPanel, pauseMenu, buyMenu, buildKeybindMenu;
 	public Transform unlockPanelContent;
-	public Button manualGeneratorButton, woodGeneratorButton;
+	public Button powerPoleButton, manualGeneratorButton, woodGeneratorButton;
 
 	// Color values
 	private readonly Color lockedButtonColor = new(255f, 170f / 255f, 170f / 255f);
@@ -200,6 +200,12 @@ public class UIHandler : MonoBehaviour {
 	 * Assign functions to all buttons on the buy window
 	 */
 	private void AssignFunctionsToBuyButtons() {
+		powerPoleButton.onClick.AddListener(() => {
+			player.money -= 2;
+			buildHandler.EnterBuildMode("Power Pole");
+			ToggleBuyMenu();
+		});
+
 		manualGeneratorButton.onClick.AddListener(() => {
 			player.money -= 10;
 			buildHandler.EnterBuildMode("Manual Generator");
@@ -251,17 +257,9 @@ public class UIHandler : MonoBehaviour {
 	 * Update the buy menu
 	 */
 	private void UpdateBuyMenu() {
-		if (player.money >= 10f) {
-			manualGeneratorButton.interactable = true;
-		} else {
-			manualGeneratorButton.interactable = false;
-		}
-
-		if (player.money >= 25f) {
-			woodGeneratorButton.interactable = true;
-		} else {
-			woodGeneratorButton.interactable = false;
-		}
+		powerPoleButton.interactable = player.money >= 2f;
+		manualGeneratorButton.interactable = player.money >= 10f;
+		woodGeneratorButton.interactable = player.money >= 25f;
 	}
 
 	/*
