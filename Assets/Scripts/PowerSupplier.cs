@@ -1,4 +1,5 @@
 using System;
+using UnityEditor.Rendering;
 using UnityEngine;
 
 public class PowerSupplier : MonoBehaviour {
@@ -25,27 +26,22 @@ public class PowerSupplier : MonoBehaviour {
 		currentFuelLevel = 0;
 		currentlyProducing = 0;
 
-		switch (name) {
-			case "Manual Generator":
-				maxFuelLevel = 1;
-				basePower = 1;
-				fuelLastUpdatedMaxDelta = 1000;
-				break;
-			case "Wood-burning Generator":
-				maxFuelLevel = 5;
-				basePower = 1.5f;
-				fuelLastUpdatedMaxDelta = 1750;
-				break;
-			case "Charcoal-burning Generator":
-				maxFuelLevel = 7;
-				basePower = 1.85f;
-				fuelLastUpdatedMaxDelta = 2000;
-				break;
-			case "Coal-burning Generator":
-				maxFuelLevel = 7;
-				basePower = 2.25f;
-				fuelLastUpdatedMaxDelta = 2000;
-				break;
+		if (name.Contains("Manual Generator")) {
+			maxFuelLevel = 1;
+			basePower = 1;
+			fuelLastUpdatedMaxDelta = 1000;
+		} else if (name.Contains("Wood-burning Generator")) {
+			maxFuelLevel = 5;
+			basePower = 1.5f;
+			fuelLastUpdatedMaxDelta = 1750;
+		} else if (name.Contains("Charcoal-burning Generator")) {
+			maxFuelLevel = 7;
+			basePower = 1.85f;
+			fuelLastUpdatedMaxDelta = 2000;
+		} else if (name.Contains("Coal-burning Generator")) {
+			maxFuelLevel = 7;
+			basePower = 2.25f;
+			fuelLastUpdatedMaxDelta = 2000;
 		}
 
 		powerMultiplier = 1;
@@ -83,14 +79,12 @@ public class PowerSupplier : MonoBehaviour {
 		if (isGeneratorRunning) {
 			Vector3 currentRotation;
 
-			switch (name) {
-				case "Manual Generator":
-					movingPart = transform.GetChild(1);
-					currentRotation = GetMovingPartRotation(movingPart);
+			if (name.Contains("Manual Generator")) {
+				movingPart = transform.GetChild(1);
+				currentRotation = GetMovingPartRotation(movingPart);
 
-					// Base speed on the fuel ratio, so it slows down over time (as if only generating while moving)
-					movingPart.localRotation = Quaternion.Euler(currentRotation.x, currentRotation.y, currentRotation.z + GetFuelRatio());
-					break;
+				// Base speed on the fuel ratio, so it slows down over time (as if only generating while moving)
+				movingPart.localRotation = Quaternion.Euler(currentRotation.x, currentRotation.y, currentRotation.z + GetFuelRatio());
 			}
 		}
 	}

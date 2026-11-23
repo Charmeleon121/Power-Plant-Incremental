@@ -26,13 +26,10 @@ public class BuildHandler : MonoBehaviour {
 		if (activeGhost != null && playerScript.lookAndMoveActive) {
 			Vector3 playerLookPos = playerScript.GetLookCoords();
 
-			switch (activeGhost.name) {
-				case "Power Pole":
-					playerLookPos.y = 0.25f;
-					break;
-				case "Manual Generator":
-					playerLookPos.y = 1.198f;
-					break;
+			if (activeGhost.name.Contains("Power Pole")) {
+				playerLookPos.y = 0.25f;
+			} else if (activeGhost.name.Contains("Manual Generator")) {
+				playerLookPos.y = 1.198f;
 			}
 			
 			if (snapEnabled) {
@@ -52,7 +49,7 @@ public class BuildHandler : MonoBehaviour {
 		playerScript.inBuildMode = true;
 		
 		Vector3 playerLookPos = playerScript.GetLookCoords();
-		
+
 		switch (type) {
 			case "Power Pole":
 				playerLookPos.y = 0.25f;
@@ -73,13 +70,10 @@ public class BuildHandler : MonoBehaviour {
 	public void Build() {
 		GameObject targetPrefab = null;
 
-		switch (activeGhost.name) {
-			case "Power Pole":
-				targetPrefab = powerPolePrefab;
-				break;
-			case "Manual Generator":
-				targetPrefab = manualGeneratorPrefab;
-				break;
+		if (activeGhost.name.Contains("Power Pole")) {
+			targetPrefab = powerPolePrefab;
+		} else if (activeGhost.name.Contains("Manual Generator")) {
+			targetPrefab = manualGeneratorPrefab;
 		}
 
 		if (targetPrefab != null) {

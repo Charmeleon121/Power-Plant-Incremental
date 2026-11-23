@@ -8,7 +8,6 @@ public class PowerSupplyAndDemandHandler : MonoBehaviour {
 
 	// All things relating to power supply and demand
 	public float powerSupply, powerDemand;
-	private int quotasMet = 0;
 	private GameObject[] suppliers;
 
 	// UI update timer
@@ -39,12 +38,8 @@ public class PowerSupplyAndDemandHandler : MonoBehaviour {
 				UpdatePowerDisplay();
 				uiLastUpdated = DateTime.UtcNow;
 			}
-		
-			if (powerDemand == 0) {
-				++quotasMet;
-				powerDemand = Mathf.Floor(100 * Mathf.Pow(quotasMet, Mathf.Exp(1) / 1.3f));
-				player.money += 10 * Mathf.Pow(quotasMet, Mathf.Exp(1) / 2f);
-			}
+
+			player.money += 10 * Mathf.Pow(powerSupply / powerDemand, Mathf.Exp(1) / 1.3f) * player.moneyMult;
 		}
 	}
 
@@ -61,12 +56,11 @@ public class PowerSupplyAndDemandHandler : MonoBehaviour {
 
 			if (psScript.isGeneratorRunning && psScript.currentFuelLevel > 0) {
 				powerSupply += psScript.currentlyProducing;
-				powerDemand = Mathf.Max(0f, powerDemand - psScript.currentlyProducing);
 				player.money += psScript.currentlyProducing * player.moneyMult;
 			}
 		}
 
-		uiHandler.powerStatsText.text = $"Current demand: {powerDemand:n2} W\nSatisfaction: {powerSupply:n2} W";
+		uiHandler.powerStatsText.text = $"Satisfaction: {powerSupply:n2}/{powerDemand:n2} W\n({(powerSupply * 100f) / powerDemand:n2}%)";
 	}
 
 	/*
