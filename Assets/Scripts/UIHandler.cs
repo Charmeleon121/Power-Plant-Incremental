@@ -14,7 +14,7 @@ public class UIHandler : MonoBehaviour {
 	private GameObject unlockButtonPrefab;
 
 	// UI elements
-	public TextMeshProUGUI powerStatsText, objNameText, objInfoText, moneyText, fpsText, snapIndicatorText;
+	public TextMeshProUGUI powerStatsText, objNameText, objInfoText, moneyText, moneyDeltaText, fpsText, snapIndicatorText;
 	public GameObject hoverPanel, unlockPanel, pauseMenu, buyMenu, buildKeybindMenu;
 	public Transform unlockPanelContent;
 	public Button powerPoleButton, manualGeneratorButton, woodGeneratorButton;
@@ -82,10 +82,10 @@ public class UIHandler : MonoBehaviour {
 	 * Update method
 	 */
 	void Update() {
-		string moneyString = player.money.ToString("N2");
-		moneyText.text = $"${moneyString}";
-		
 		fpsText.text = $"FPS: {1f / Time.deltaTime:n2}";
+
+		UpdateMoneyText();
+		UpdatePowerSatisfaction();
 
 		UpdateUnlockPanel();
 		UpdateBuyMenu();
@@ -214,6 +214,39 @@ public class UIHandler : MonoBehaviour {
 	}
 
 	/*
+	 * Update the money and money delta text
+	 */
+	private void UpdateMoneyText() {
+		string moneyString = player.money.ToString("N2");
+		moneyText.text = $"${moneyString}";
+
+		if (psadHandler.moneyDelta >= 1f) {
+			float divFactor = 1f;
+			string prefix = "";
+			if (psadHandler.moneyDelta >= 1e3f) {
+				divFactor = 1e3f;
+				prefix = "k";
+			} else if (psadHandler.moneyDelta >= 1e6f) {
+				divFactor = 1e6f;
+				prefix = "M";
+			} else if (psadHandler.moneyDelta >= 1e9f) {
+				divFactor = 1e9f;
+				prefix = "G";
+			}
+
+			moneyDeltaText.text = $"+${psadHandler.moneyDelta / divFactor:n2}{prefix}/s";
+		} else {
+			moneyDeltaText.text = $"+{psadHandler.moneyDelta * 100f:n2}c/s";
+		}
+
+		if (psadHandler.moneyDelta == 0) {
+			moneyDeltaText.color = Color.white;
+		} else {
+			moneyDeltaText.color = Color.green;
+		}
+	}
+
+	/*
 	 * Update the upgrade panel
 	 */
 	private void UpdateUnlockPanel() {
@@ -263,6 +296,13 @@ public class UIHandler : MonoBehaviour {
 	}
 
 	/*
+	 * Update the power satisfaction display
+	 */
+	public void UpdatePowerSatisfaction() {
+		powerStatsText.text = $"Satisfaction: {psadHandler.powerSupply:n2}/{psadHandler.powerDemand:n2} W\n({(psadHandler.powerSupply * 100f) / psadHandler.powerDemand:n2}%)";
+	}
+
+	/*
 	 * Toggle visibility and background color of the hover text panel
 	 */
 	public void ToggleHoverPanel(bool state, bool hoveredObjIsActive = false) {
@@ -298,37 +338,50 @@ public class UIHandler : MonoBehaviour {
 	/*
 	 * Toggle visibility of the unlock panel
 	 */
-	public void ToggleUnlockPanel() {
-		double delta = DateTime.UtcNow.Subtract(unlockPanelLastToggled).TotalMilliseconds;
+	public void ToggleUnlockPanel(bool forceClose = false) {
+		if (forceClose) {
+			unlockPanel.SetActive(false);
+			player.lookAndMoveActive = true;
+			ToggleCursorLockState(true);
+		} else {
+			double delta = DateTime.UtcNow.Subtract(unlockPanelLastToggled).TotalMilliseconds;
 
-		if (delta >= 150) {
-			unlockPanelLastToggled = DateTime.UtcNow;
-			unlockPanel.SetActive(!unlockPanel.activeSelf);
-			player.lookAndMoveActive = !player.lookAndMoveActive;
+			if (delta >= 150) {
+				unlockPanel.SetActive(!unlockPanel.activeSelf);
+				player.lookAndMoveActive = !player.lookAndMoveActive;
+				ToggleCursorLockState(!unlockPanel.activeSelf);
 
-			ToggleCursorLockState(!unlockPanel.activeSelf);
+				unlockPanelLastToggled = DateTime.UtcNow;
+			}
 		}
 	}
 	
 	/*
 	 * Toggle visibility of the pause menu
 	 */
-	public void TogglePauseMenu() {
+	public void TogglePauseMenu(bool forceClose = false) {
 		pauseMenu.transform.GetChild(1).gameObject.SetActive(false);
-		
-		double delta = DateTime.UtcNow.Subtract(pauseMenuLastToggled).TotalMilliseconds;
-		
-		if (delta >= 150) {
-			pauseMenuLastToggled = DateTime.UtcNow;
-			pauseMenu.SetActive(!pauseMenu.activeSelf);
-			player.lookAndMoveActive = !player.lookAndMoveActive;
-			
-			ToggleCursorLockState(!pauseMenu.activeSelf);
-			
-			if (pauseMenu.activeSelf) {
-				Time.timeScale = 0f;
-			} else {
-				Time.timeScale = 1f;
+
+		if (forceClose) {
+			pauseMenu.SetActive(false);
+			player.lookAndMoveActive = true;
+			ToggleCursorLockState(true);
+			Time.timeScale = 1f;
+		} else {
+			double delta = DateTime.UtcNow.Subtract(pauseMenuLastToggled).TotalMilliseconds;
+
+			if (delta >= 150) {
+				pauseMenu.SetActive(!pauseMenu.activeSelf);
+				player.lookAndMoveActive = !player.lookAndMoveActive;
+				ToggleCursorLockState(!pauseMenu.activeSelf);
+
+				if (pauseMenu.activeSelf) {
+					Time.timeScale = 0f;
+				} else {
+					Time.timeScale = 1f;
+				}
+
+				pauseMenuLastToggled = DateTime.UtcNow;
 			}
 		}
 	}
@@ -336,15 +389,21 @@ public class UIHandler : MonoBehaviour {
 	/*
 	 * Toggle visibility of the buy menu
 	 */
-	public void ToggleBuyMenu() {
-		double delta = DateTime.UtcNow.Subtract(buyMenuLastToggled).TotalMilliseconds;
+	public void ToggleBuyMenu(bool forceClose = false) {
+		if (forceClose) {
+			buyMenu.SetActive(false);
+			player.lookAndMoveActive = true;
+			ToggleCursorLockState(true);
+		} else {
+			double delta = DateTime.UtcNow.Subtract(buyMenuLastToggled).TotalMilliseconds;
 
-		if (delta >= 150) {
-			buyMenuLastToggled = DateTime.UtcNow;
-			buyMenu.SetActive(!buyMenu.activeSelf);
-			player.lookAndMoveActive = !player.lookAndMoveActive;
+			if (delta >= 150) {
+				buyMenu.SetActive(!buyMenu.activeSelf);
+				player.lookAndMoveActive = !player.lookAndMoveActive;
+				ToggleCursorLockState(!buyMenu.activeSelf);
 
-			ToggleCursorLockState(!buyMenu.activeSelf);
+				buyMenuLastToggled = DateTime.UtcNow;
+			}
 		}
 	}
 	

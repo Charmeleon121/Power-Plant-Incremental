@@ -3,28 +3,28 @@ using UnityEngine;
 
 public class PowerSupplyAndDemandHandler : MonoBehaviour {
 	// External scripts
-	private UIHandler uiHandler;
 	private Player player;
 
 	// All things relating to power supply and demand
 	public float powerSupply, powerDemand;
 	private GameObject[] suppliers;
 
-	// UI update timer
-	private DateTime uiLastUpdated;
+	// All things to do with the amount of money the player gets from generating
+	public float moneyDelta;
+	private DateTime moneyLastUpdated;
 
 	/*
 	 * Start method
 	 */
 	void Start() {
-		uiHandler = GetComponent<UIHandler>();
 		player = GameObject.Find("Player").GetComponent<Player>();
 
 		// Initial power demand of 100 W
 		powerDemand = 100;
-		
-		UpdatePowerDisplay();
-		uiLastUpdated = DateTime.UtcNow;
+
+		UpdatePowerStats();
+
+		moneyLastUpdated = DateTime.UtcNow;
 	}
 
 	/*
@@ -32,21 +32,21 @@ public class PowerSupplyAndDemandHandler : MonoBehaviour {
 	 */
 	void Update() {
 		if (player.lookAndMoveActive) {
-			double delta = DateTime.UtcNow.Subtract(uiLastUpdated).TotalSeconds;
+			UpdatePowerStats();
 
-			if (delta >= 1) {
-				UpdatePowerDisplay();
-				uiLastUpdated = DateTime.UtcNow;
+			// Only update the money every second
+			if (DateTime.UtcNow.Subtract(moneyLastUpdated).TotalSeconds >= 1) {
+				CalcMoneyDelta();
+				player.money += moneyDelta;
+				moneyLastUpdated = DateTime.UtcNow;
 			}
-
-			player.money += 10 * Mathf.Pow(powerSupply / powerDemand, Mathf.Exp(1) / 1.3f) * player.moneyMult;
 		}
 	}
 
 	/*
 	 * Update the power supply and demand display
 	 */
-	private void UpdatePowerDisplay() {
+	private void UpdatePowerStats() {
 		suppliers = GameObject.FindGameObjectsWithTag("Generator");
 
 		powerSupply = 0;
@@ -56,11 +56,8 @@ public class PowerSupplyAndDemandHandler : MonoBehaviour {
 
 			if (psScript.isGeneratorRunning && psScript.currentFuelLevel > 0) {
 				powerSupply += psScript.currentlyProducing;
-				player.money += psScript.currentlyProducing * player.moneyMult;
 			}
 		}
-
-		uiHandler.powerStatsText.text = $"Satisfaction: {powerSupply:n2}/{powerDemand:n2} W\n({(powerSupply * 100f) / powerDemand:n2}%)";
 	}
 
 	/*
@@ -90,5 +87,12 @@ public class PowerSupplyAndDemandHandler : MonoBehaviour {
 				psScript.fuelLastUpdatedMaxDelta = value;
 			}
 		}
+	}
+
+	/*
+	 * Calculate the amount of money the player should get based on their generating
+	 */
+	private void CalcMoneyDelta() {
+		moneyDelta = 10 * Mathf.Pow(powerSupply / powerDemand, 1.5f) * player.moneyMult;
 	}
 }

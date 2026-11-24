@@ -20,7 +20,7 @@ public class Player : MonoBehaviour {
 
 	// Player inventory and monehy
 	public float money = 0f;
-	public float moneyMult = 0.1f;
+	public float moneyMult = 1f;
 
 	/*
 	 * Initialize keybinds on Awake
@@ -68,15 +68,15 @@ public class Player : MonoBehaviour {
 			if (unlockMenuAction.triggered) {
 				uiHandler.ToggleUnlockPanel();
 			}
-		
-			if (pauseMenuAction.triggered) {
-				uiHandler.TogglePauseMenu();
-			}
 
 			if (buyMenuAction.triggered && !inBuildMode) {
 				uiHandler.ToggleBuyMenu();
 			}
-		
+
+			if (pauseMenuAction.triggered) {
+				uiHandler.TogglePauseMenu();
+			}
+
 			if (inBuildMode) {
 				if (clickAction.triggered) {
 					buildHandler.Build();
@@ -88,6 +88,23 @@ public class Player : MonoBehaviour {
 					uiHandler.ToggleSnapToGridIndicator();
 					buildHandler.snapEnabled = !buildHandler.snapEnabled;
 				}
+			}
+		} else {
+			// Forcibly close the unlock panel
+			if (unlockMenuAction.triggered) {
+				uiHandler.ToggleUnlockPanel(true);
+			}
+
+			// Forcibly close the buy menu
+			if (buyMenuAction.triggered && !inBuildMode) {
+				uiHandler.ToggleBuyMenu(true);
+			}
+
+			// Forcibly close everything
+			if (pauseMenuAction.triggered) {
+				uiHandler.TogglePauseMenu(true);
+				uiHandler.ToggleUnlockPanel(true);
+				uiHandler.ToggleBuyMenu(true);
 			}
 		}
 	}
